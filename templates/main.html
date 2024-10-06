@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vocabulary Game</title>
+</head>
+<body>
+    <h1>Vocabulary Game</h1>
+
+    <div>
+        <p id="random-text"></p>
+        <p id="translated-text"></p>
+    </div>
+
+    <input type="text" id="answer-input">
+    <button onclick="submitAnswer()">Submit</button>
+
+    <script>
+        async function fetchAndDisplay() {
+            const response = await fetch('/');
+            const data = await response.json();
+
+            document.getElementById('random-text').textContent = data.random_text;
+            document.getElementById('translated-text').textContent = data.translated_text;
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('answer-input').value;
+            const response = await fetch('/submit_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ answer: answer })
+            });
+
+            const data = await response.json();
+            if (data.is_correct) {
+                alert('Correct answer!');
+            } else {
+                alert('Incorrect answer.');
+            }
+        }
+
+        fetchAndDisplay();
+    </script>
+</body>
+</html>
