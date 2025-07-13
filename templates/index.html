@@ -145,89 +145,92 @@
     </div>
 
     <script>
-        let lives = {{ lives }};
-        let score = {{ score }};
+(function() {
+    let currentChallengeId = null;
+    let lives = {{ lives }};
+    let score = {{ score }};
 
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
+        updateScoreboard();
+        getNewChallenge();
+    });
+
+    function updateScoreboard() {
+        document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
+        document.getElementById('current-score').textContent = score;
+    }
+
+    async function fetchApi(url, options = {}) {
+        document.getElementById('new-challenge-btn').disabled = true;
+        const response = await fetch(url, options);
+        document.getElementById('new-challenge-btn').disabled = false;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
+            throw new Error(errorData.detail);
+        }
+        return await response.json();
+    }
+
+    async function getNewChallenge() {
+        document.getElementById('challenge-content').classList.add('hidden');
+        document.getElementById('instruction').textContent = 'Loading challenge...';
+        document.getElementById('answer-input').value = '';
+        document.getElementById('feedback-message').textContent = '';
+        document.getElementById('correct-answer-feedback').textContent = '';
+
+        try {
+            const data = await fetchApi('/get_challenge?difficulty=1');
+            currentChallengeId = data.challenge_id;
+            
+            const sourceTextElement = document.getElementById('source-text');
+            if (data.challenge_type === 'image_description') {
+                sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
+                document.getElementById('instruction').textContent = 'Describe the image in Kinyarwanda or English:';
+            } else {
+                sourceTextElement.textContent = data.source_text;
+                document.getElementById('instruction').textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+            }
+
+            document.getElementById('context-text').textContent = data.context || '';
+            document.getElementById('challenge-content').classList.remove('hidden');
+        } catch (error) {
+            document.getElementById('instruction').textContent = 'Failed to load challenge. Try again.';
+        }
+    }
+
+    async function submitAnswer() {
+        const userAnswer = document.getElementById('answer-input').value.trim();
+        if (!userAnswer) return;
+
+        const formData = new FormData();
+        formData.append('challenge_id', currentChallengeId);
+        formData.append('user_answer', userAnswer);
+
+        try {
+            const data = await fetchApi('/submit_answer', { method: 'POST', body: formData });
+            
+            lives = data.lives;
+            score = data.score;
             updateScoreboard();
-            getNewChallenge();
-        });
 
-        function updateScoreboard() {
-            document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
-            document.getElementById('current-score').textContent = score;
-        }
-
-        async function fetchApi(url, options = {}) {
-            document.getElementById('new-challenge-btn').disabled = true;
-            const response = await fetch(url, options);
-            document.getElementById('new-challenge-btn').disabled = false;
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
-                throw new Error(errorData.detail);
-            }
-            return await response.json();
-        }
-
-        async function getNewChallenge() {
-            document.getElementById('challenge-content').classList.add('hidden');
-            document.getElementById('instruction').textContent = 'Loading challenge...';
-            document.getElementById('answer-input').value = '';
-            document.getElementById('feedback-message').textContent = '';
-            document.getElementById('correct-answer-feedback').textContent = '';
-
-            try {
-                const data = await fetchApi('/get_challenge?difficulty=1');
-                currentChallengeId = data.challenge_id;
-                
-                const sourceTextElement = document.getElementById('source-text');
-                if (data.challenge_type === 'image_description') {
-                    sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                    document.getElementById('instruction').textContent = 'Describe the image in Kinyarwanda or English:';
-                } else {
-                    sourceTextElement.textContent = data.source_text;
-                    document.getElementById('instruction').textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
-                }
-
-                document.getElementById('context-text').textContent = data.context || '';
-                document.getElementById('challenge-content').classList.remove('hidden');
-            } catch (error) {
-                document.getElementById('instruction').textContent = 'Failed to load challenge. Try again.';
-            }
-        }
-
-        async function submitAnswer() {
-            const userAnswer = document.getElementById('answer-input').value.trim();
-            if (!userAnswer) return;
-
-            const formData = new FormData();
-            formData.append('challenge_id', currentChallengeId);
-            formData.append('user_answer', userAnswer);
-
-            try {
-                const data = await fetchApi('/submit_answer', { method: 'POST', body: formData });
-                
-                lives = data.lives;
-                score = data.score;
+            document.getElementById('feedback-message').textContent = data.message;
+            document.getElementById('correct-answer-feedback').textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
+            
+            if (lives <= 0) {
+                alert('Game Over!');
+                // Reset the game on the frontend
+                lives = 3;
+                score = 0;
                 updateScoreboard();
-
-                document.getElementById('feedback-message').textContent = data.message;
-                document.getElementById('correct-answer-feedback').textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
-                
-                if (lives <= 0) {
-                    alert('Game Over!');
-                    // Reset the game on the frontend
-                    lives = 3;
-                    score = 0;
-                    updateScoreboard();
-                }
-
-                setTimeout(getNewChallenge, 3000);
-            } catch (error) {
-                document.getElementById('feedback-message').textContent = `Error: ${error.message}`;
             }
+
+            setTimeout(getNewChallenge, 3000);
+        } catch (error) {
+            document.getElementById('feedback-message').textContent = `Error: ${error.message}`;
         }
-    </script>
+    }
+})();
+</script>
 
 </body>
 </html>
