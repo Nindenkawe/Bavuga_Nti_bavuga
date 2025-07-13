@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+env/
+venv/
+bin/
+include/
+lib/
+pyvenv.cfg
+
+# Dependencies
+/lib64
+
+# Environment variables
+.env
+
+# VSCode
+.vscode/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
