@@ -10,15 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <style>
         :root {
-            --background-color: #1a1a2e;
-            --primary-color: #e94560;
-            --secondary-color: #0f3460;
-            --accent-color: #f0e68c;
-            --text-color: #ffffff;
-            --container-bg: #16213e;
-            --border-color: #e94560;
-            --error-color: #ff6b6b;
-            --success-color: #70e0a8;
+            --primary-color: #00A5E1; /* Blue */
+            --accent-color: #FAD300; /* Yellow */
+            --secondary-color: #1A603A; /* Green */
+
+            --background-color: #0A192F; /* Dark Blue */
+            --container-bg: #112240; /* Slightly lighter dark blue */
+            --border-color: var(--primary-color); /* Use primary blue for borders */
+
+            --text-color: #ffffff; /* White text for readability */
+            --error-color: #FF6B6B; /* Standard red for errors */
+            --success-color: #70E0A8; /* Standard green for success */
         }
         body {
             font-family: 'Roboto Mono', monospace;
@@ -29,7 +31,7 @@
         #container {
             background: var(--container-bg);
             border: 3px solid var(--border-color);
-            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5), 0 0 40px rgba(233, 69, 96, 0.3);
+            box-shadow: 0 0 20px rgba(0, 165, 225, 0.5), 0 0 40px rgba(0, 165, 225, 0.3);
             padding: 2.5rem;
             border-radius: 1.5rem;
             max-width: 700px;
@@ -58,14 +60,14 @@
             color: var(--primary-color);
             border-color: var(--primary-color);
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(233, 69, 96, 0.4);
+            box-shadow: 0 8px 20px rgba(0, 165, 225, 0.4);
         }
         .btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
         input[type="text"] {
-            background-color: #0f3460;
+            background-color: #1A603A;
             color: var(--text-color);
             border: 3px solid var(--border-color);
             padding: 1rem;
@@ -76,7 +78,7 @@
         }
         input[type="text"]:focus {
             outline: none;
-            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+            box-shadow: 0 0 15px rgba(0, 165, 225, 0.5);
         }
         .feedback-correct {
             color: var(--success-color);
@@ -95,7 +97,7 @@
         }
         .challenge-box {
             border: 3px dashed var(--secondary-color);
-            background-color: rgba(15, 52, 96, 0.5);
+            background-color: rgba(26, 96, 58, 0.5);
             color: var(--text-color);
             border-radius: 1.5rem;
         }
