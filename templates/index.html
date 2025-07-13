@@ -147,13 +147,26 @@
     <script>
 (function() {
     let currentChallengeId = null;
-    let lives = {{ lives }};
-    let score = {{ score }};
+    let lives = {{ lives | int(3) }};
+    let score = {{ score | int(0) }};
+
+    const answerInput = document.getElementById('answer-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const newChallengeBtn = document.getElementById('new-challenge-btn');
+    const instructionElement = document.getElementById('instruction');
+    const challengeContent = document.getElementById('challenge-content');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const correctAnswerFeedback = document.getElementById('correct-answer-feedback');
+    const sourceTextElement = document.getElementById('source-text');
+    const contextTextElement = document.getElementById('context-text');
 
     document.addEventListener('DOMContentLoaded', () => {
         updateScoreboard();
         getNewChallenge();
     });
+
+    submitBtn.addEventListener('click', submitAnswer);
+    newChallengeBtn.addEventListener('click', getNewChallenge);
 
     function updateScoreboard() {
         document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
@@ -161,9 +174,11 @@
     }
 
     async function fetchApi(url, options = {}) {
-        document.getElementById('new-challenge-btn').disabled = true;
+        newChallengeBtn.disabled = true;
+        submitBtn.disabled = true; // Disable submit button during API call
         const response = await fetch(url, options);
-        document.getElementById('new-challenge-btn').disabled = false;
+        newChallengeBtn.disabled = false;
+        submitBtn.disabled = false; // Re-enable submit button
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
             throw new Error(errorData.detail);
@@ -172,34 +187,34 @@
     }
 
     async function getNewChallenge() {
-        document.getElementById('challenge-content').classList.add('hidden');
-        document.getElementById('instruction').textContent = 'Loading challenge...';
-        document.getElementById('answer-input').value = '';
-        document.getElementById('feedback-message').textContent = '';
-        document.getElementById('correct-answer-feedback').textContent = '';
+        challengeContent.classList.add('hidden');
+        instructionElement.textContent = 'Loading challenge...';
+        answerInput.value = '';
+        feedbackMessage.textContent = '';
+        correctAnswerFeedback.textContent = '';
 
         try {
             const data = await fetchApi('/get_challenge?difficulty=1');
             currentChallengeId = data.challenge_id;
             
-            const sourceTextElement = document.getElementById('source-text');
             if (data.challenge_type === 'image_description') {
                 sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                document.getElementById('instruction').textContent = 'Describe the image in Kinyarwanda or English:';
+                instructionElement.textContent = 'Describe the image in Kinyarwanda or English:';
             } else {
                 sourceTextElement.textContent = data.source_text;
-                document.getElementById('instruction').textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+                instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
             }
 
-            document.getElementById('context-text').textContent = data.context || '';
-            document.getElementById('challenge-content').classList.remove('hidden');
+            contextTextElement.textContent = data.context || '';
+            challengeContent.classList.remove('hidden');
         } catch (error) {
-            document.getElementById('instruction').textContent = 'Failed to load challenge. Try again.';
+            instructionElement.textContent = 'Failed to load challenge. Try again.';
+            console.error("Error fetching new challenge:", error);
         }
     }
 
     async function submitAnswer() {
-        const userAnswer = document.getElementById('answer-input').value.trim();
+        const userAnswer = answerInput.value.trim();
         if (!userAnswer) return;
 
         const formData = new FormData();
@@ -213,12 +228,11 @@
             score = data.score;
             updateScoreboard();
 
-            document.getElementById('feedback-message').textContent = data.message;
-            document.getElementById('correct-answer-feedback').textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
+            feedbackMessage.textContent = data.message;
+            correctAnswerFeedback.textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
             
             if (lives <= 0) {
                 alert('Game Over!');
-                // Reset the game on the frontend
                 lives = 3;
                 score = 0;
                 updateScoreboard();
@@ -226,7 +240,8 @@
 
             setTimeout(getNewChallenge, 3000);
         } catch (error) {
-            document.getElementById('feedback-message').textContent = `Error: ${error.message}`;
+            feedbackMessage.textContent = `Error: ${error.message}`;
+            console.error("Error submitting answer:", error);
         }
     }
 })();
