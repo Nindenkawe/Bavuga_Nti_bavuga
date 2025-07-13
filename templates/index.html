@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bavuga Ntibavuga</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #1a1a2e;
+            --primary-color: #e94560;
+            --secondary-color: #0f3460;
+            --accent-color: #f0e68c;
+            --text-color: #ffffff;
+            --container-bg: #16213e;
+            --border-color: #e94560;
+            --error-color: #ff6b6b;
+            --success-color: #70e0a8;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+        #container {
+            background: var(--container-bg);
+            border: 3px solid var(--border-color);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5), 0 0 40px rgba(233, 69, 96, 0.3);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 {
+            font-family: 'VT323', monospace;
+            color: var(--primary-color);
+            text-shadow: 0 0 8px var(--primary-color);
+            font-size: 4.5rem;
+            letter-spacing: 3px;
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            font-size: 1.2rem;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: transparent;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(233, 69, 96, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        input[type="text"] {
+            background-color: #0f3460;
+            color: var(--text-color);
+            border: 3px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: 'Roboto Mono', monospace;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+        }
+        .feedback-correct {
+            color: var(--success-color);
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .feedback-incorrect {
+            color: var(--error-color);
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .score-display, .lives-display {
+            font-family: 'VT323', monospace;
+            color: var(--accent-color);
+            font-size: 2.5rem;
+        }
+        .challenge-box {
+            border: 3px dashed var(--secondary-color);
+            background-color: rgba(15, 52, 96, 0.5);
+            color: var(--text-color);
+            border-radius: 1.5rem;
+        }
+        .source-text-display {
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .context-text {
+            font-size: 1.1rem;
+            color: #dcdcdc;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-4">
+
+    <div id="container" class="flex flex-col">
+        <h1 class="text-center mb-6">Bavuga Ntibavuga</h1>
+
+        <div id="game-screen">
+            <div class="flex justify-between items-center mb-6">
+                <p class="score-display">Score: <span id="current-score">{{ total_score if total_score is not none else '0' }}</span></p>
+                <p class="lives-display">Lives: <span id="lives-count">3</span></p>
+            </div>
+
+            <div id="challenge-area" class="mb-6 challenge-box p-6 min-h-[200px] flex flex-col justify-center">
+                <p id="instruction" class="text-xl mb-4 text-center">Loading challenge...</p>
+                <div id="challenge-content" class="hidden space-y-4">
+                    <p id="source-text" class="text-2xl mb-3 p-4 text-center source-text-display bg-black bg-opacity-20 rounded-lg"></p>
+                    <p id="context-text" class="text-center context-text"></p>
+                    <input type="text" id="answer-input" placeholder="Your answer..." class="w-full">
+                    <button id="submit-btn" onclick="submitAnswer()" class="w-full btn">Submit</button>
+                </div>
+            </div>
+
+            <div id="feedback-area" class="mb-6 min-h-[60px] text-center">
+                 <p id="feedback-message" class="text-xl"></p>
+                 <p id="correct-answer-feedback" class="text-md mt-1"></p>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="new-challenge-btn" onclick="getNewChallenge()" class="btn">New Challenge</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lives = {{ lives }};
+        let score = {{ score }};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateScoreboard();
+            getNewChallenge();
+        });
+
+        function updateScoreboard() {
+            document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
+            document.getElementById('current-score').textContent = score;
+        }
+
+        async function fetchApi(url, options = {}) {
+            document.getElementById('new-challenge-btn').disabled = true;
+            const response = await fetch(url, options);
+            document.getElementById('new-challenge-btn').disabled = false;
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
+                throw new Error(errorData.detail);
+            }
+            return await response.json();
+        }
+
+        async function getNewChallenge() {
+            document.getElementById('challenge-content').classList.add('hidden');
+            document.getElementById('instruction').textContent = 'Loading challenge...';
+            document.getElementById('answer-input').value = '';
+            document.getElementById('feedback-message').textContent = '';
+            document.getElementById('correct-answer-feedback').textContent = '';
+
+            try {
+                const data = await fetchApi('/get_challenge?difficulty=1');
+                currentChallengeId = data.challenge_id;
+                
+                const sourceTextElement = document.getElementById('source-text');
+                if (data.challenge_type === 'image_description') {
+                    sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
+                    document.getElementById('instruction').textContent = 'Describe the image in Kinyarwanda or English:';
+                } else {
+                    sourceTextElement.textContent = data.source_text;
+                    document.getElementById('instruction').textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+                }
+
+                document.getElementById('context-text').textContent = data.context || '';
+                document.getElementById('challenge-content').classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('instruction').textContent = 'Failed to load challenge. Try again.';
+            }
+        }
+
+        async function submitAnswer() {
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            if (!userAnswer) return;
+
+            const formData = new FormData();
+            formData.append('challenge_id', currentChallengeId);
+            formData.append('user_answer', userAnswer);
+
+            try {
+                const data = await fetchApi('/submit_answer', { method: 'POST', body: formData });
+                
+                lives = data.lives;
+                score = data.score;
+                updateScoreboard();
+
+                document.getElementById('feedback-message').textContent = data.message;
+                document.getElementById('correct-answer-feedback').textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
+                
+                if (lives <= 0) {
+                    alert('Game Over!');
+                    // Reset the game on the frontend
+                    lives = 3;
+                    score = 0;
+                    updateScoreboard();
+                }
+
+                setTimeout(getNewChallenge, 3000);
+            } catch (error) {
+                document.getElementById('feedback-message').textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+
+</body>
+</html>
