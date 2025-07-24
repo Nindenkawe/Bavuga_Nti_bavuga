@@ -146,6 +146,8 @@
 
     <script>
 (function() {
+    console.log("Script executed at: " + new Date().toLocaleTimeString());
+
     let currentChallengeId = null;
     let lives = {{ lives | int(3) }};
     let score = {{ score | int(0) }};
@@ -247,5 +249,5 @@
 })();
 </script>
 
-</body>
+    </body>
 </html>

@@ -6,6 +6,8 @@ from typing import Optional
 from contextlib import asynccontextmanager
 import asyncio
 import re
+from google_adk.agent import Agent
+from google_adk.llm.gemini import Gemini
 
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, Response
@@ -31,7 +33,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
-GEMMA_MODEL_NAME = "gemini-1.5-flash-latest"
+GEMMA_MODEL_NAME = "gemini-2.5-flash-latest"
 MAX_RETRIES = 3
 BASE_DELAY = 1
 POINTS_PER_CORRECT_ANSWER = 10
@@ -79,24 +81,62 @@ class AIServiceError(Exception):
     """Custom exception for AI service failures."""
     pass
 
-# --- Generative AI Functions ---
-async def call_generative_api(func, *args, **kwargs):
-    for attempt in range(MAX_RETRIES):
-        try:
-            return await func(*args, **kwargs)
-        except Exception as e:
-            delay = BASE_DELAY * (2 ** attempt) + random.uniform(0, 1)
-            logger.warning(f"API call failed or returned invalid format (attempt {attempt + 1}/{MAX_RETRIES}): {e}. Retrying in {delay:.2f}s.")
-            await asyncio.sleep(delay)
-    
-    logger.error("AI service failed after multiple retries.")
-    raise AIServiceError("AI service is unavailable after multiple retries.")
+# --- AI Agent Configuration ---
+agent = Agent(
+    llm=Gemini(model=GEMMA_MODEL_NAME),
+    persona=(
+        "You are a master of Kinyarwanda and English, specializing in linguistics, "
+        "culture, and word games for a Rwandan audience. Your goal is to create "
+        "engaging and educational challenges that adapt to the user's performance."
+    ),
+)
 
+# --- Generative AI Functions ---
 async def generate_challenge(difficulty: int, previous_answers: list[str] = None) -> dict:
-    """Generates a new challenge using the AI, with a fallback mechanism."""
+    """Generates a new challenge using the AI agent."""
     try:
-        return await call_generative_api(_generate_challenge_internal, difficulty, previous_answers)
-    except AIServiceError:
+        level = {1: "beginner", 2: "intermediate", 3: "advanced"}.get(difficulty, "intermediate")
+        
+        challenge_types = ["kin_to_eng_proverb", "eng_to_kin_phrase"]
+        if game_state["score"] > 50 and game_state["lives"] > 1 and random.random() < 0.3:
+            challenge_types.append("image_description")
+        challenge_type = random.choice(challenge_types)
+
+        prompt = f"Generate a {challenge_type} challenge for a {level} user."
+        if previous_answers:
+            prompt += f" Consider these previous incorrect answers: {', '.join(previous_answers)}"
+
+        response = await agent.chat(prompt)
+        
+        # Assuming the agent returns a parsable string
+        parts = response.text.split('|')
+        if len(parts) < 2:
+            raise ValueError("Invalid response format from agent")
+
+        if challenge_type == "image_description":
+            return {
+                "challenge_type": challenge_type,
+                "source_text": parts[0].strip(),
+                "target_text": f"Kinyarwanda: {parts[1].strip()}\nEnglish: {parts[2].strip() if len(parts) > 2 else ''}",
+                "context": "Describe the image in either language.",
+            }
+        elif challenge_type == "kin_to_eng_proverb":
+            return {
+                "challenge_type": challenge_type,
+                "source_text": parts[0].strip(),
+                "target_text": parts[1].strip(),
+                "context": parts[2].strip() if len(parts) > 2 else '',
+            }
+        else:  # eng_to_kin_phrase
+            return {
+                "challenge_type": challenge_type,
+                "source_text": parts[0].strip(),
+                "target_text": parts[1].strip(),
+                "context": None,
+            }
+
+    except Exception as e:
+        logger.error(f"Error generating challenge with agent: {e}")
         return {
             "challenge_type": "eng_to_kin_phrase",
             "source_text": "Service Unavailable",
@@ -104,104 +144,17 @@ async def generate_challenge(difficulty: int, previous_answers: list[str] = None
             "context": "We are unable to generate new challenges at this time.",
         }
 
-async def _generate_challenge_internal(difficulty: int, previous_answers: list[str] = None) -> dict:
-    """Internal logic for generating a challenge."""
-    level = {1: "beginner", 2: "intermediate", 3: "advanced"}.get(difficulty, "intermediate")
-    
-    challenge_types = ["kin_to_eng_proverb", "eng_to_kin_phrase"]
-    if game_state["score"] > 50 and game_state["lives"] > 1:
-        if random.random() < 0.3:
-            challenge_types.append("image_description")
-
-    challenge_type = random.choice(challenge_types)
-
-    system_instruction = '''You are a master of Kinyarwanda and English, an expert in linguistics, culture, and word games. 
-    Your goal is to create engaging and educational challenges that adapt to the user's performance.
-    - You will be given a difficulty level and a list of the user's previous (incorrect) answers.
-    - Use the previous answers to understand the user's weak points and tailor the next challenge to help them improve.
-    - Generate challenges that are not just translations, but also cultural insights, idiomatic expressions, and even visual descriptions.
-    - Ensure a logical progression of difficulty. Avoid overly simplistic or impossibly difficult jumps.
-    - Be creative and make the experience fun and rewarding!
-    '''
-
-    prompt_parts = [
-        f"Difficulty: {level}",
-    ]
-    if previous_answers:
-        prompt_parts.append("Consider the user's previous incorrect answers to tailor the challenge:")
-        for ans in previous_answers:
-            prompt_parts.append(f"- {ans}")
-
-    if challenge_type == "image_description":
-        image_url = "https://picsum.photos/seed/picsum/200/300"
-        prompt_parts.append(f"Challenge: Describe the image at this URL in Kinyarwanda or English: {image_url}")
-        prompt_parts.append("Format: Image URL | Description in Kinyarwanda | Description in English")
-    elif challenge_type == "kin_to_eng_proverb":
-        prompt_parts.append("Challenge: Generate a Kinyarwanda proverb, its English translation, and a brief context.")
-        prompt_parts.append("Format: Kinyarwanda Proverb | English Translation | Context")
-    else:  # eng_to_kin_phrase
-        prompt_parts.append("Challenge: Generate an English phrase and its Kinyarwanda translation.")
-        prompt_parts.append("Format: English Phrase | Kinyarwanda Translation")
-    
-    prompt_parts.append("\nIMPORTANT: Respond ONLY with the formatted text, without any additional explanations, introductions, or markdown.")
-    full_prompt = "\n".join(prompt_parts)
-
-    model = genai.GenerativeModel(GEMMA_MODEL_NAME, system_instruction=system_instruction)
-    response = await model.generate_content_async(full_prompt)
-    
-    text = response.text.strip()
-    match = re.search(r"^(.*?)\s*\|\s*(.*?)(?:\s*\|\s*(.*))?$", text, re.MULTILINE)
-
-    if not match:
-        logger.error(f"Could not parse AI response: {text}")
-        raise ValueError("Invalid format from AI: No match found")
-
-    parts = [p.strip() if p else "" for p in match.groups()]
-
-    if challenge_type == "image_description" and len(parts) >= 2:
-        return {
-            "challenge_type": challenge_type,
-            "source_text": parts[0],
-            "target_text": f"Kinyarwanda: {parts[1]}\nEnglish: {parts[2]}",
-            "context": "Describe the image in either language.",
-        }
-    elif challenge_type == "kin_to_eng_proverb" and len(parts) >= 3:
-        return {
-            "challenge_type": challenge_type,
-            "source_text": parts[0],
-            "target_text": parts[1],
-            "context": parts[2],
-        }
-    elif challenge_type == "eng_to_kin_phrase" and len(parts) >= 2:
-        return {
-            "challenge_type": challenge_type,
-            "source_text": parts[0],
-            "target_text": parts[1],
-            "context": None,
-        }
-    else:
-        logger.error(f"Invalid format from AI for challenge type {challenge_type}: {text}")
-        raise ValueError(f"Invalid format from AI after parsing: {text}")
-
 async def evaluate_answer(user_answer: str, target_text: str) -> bool:
-    """Evaluates the user's answer with AI assistance."""
+    """Evaluates the user's answer with the AI agent."""
     try:
-        return await call_generative_api(_evaluate_answer_internal, user_answer, target_text)
-    except AIServiceError:
-        logger.error("AI service is unavailable to evaluate answer. Defaulting to incorrect.")
+        prompt = f"You are an expert in Kinyarwanda and English. Evaluate if the user's answer '{user_answer}' is a correct and accurate translation of the target text '{target_text}'. Consider common synonyms and minor grammatical variations, but reject answers that are clearly wrong, incomplete, or irrelevant. Respond ONLY with 'Correct' or 'Incorrect'."
+        response = await agent.chat(prompt)
+        return "correct" in response.text.lower()
+    except Exception as e:
+        logger.error(f"Error evaluating answer with agent: {e}")
         return False
 
-async def _evaluate_answer_internal(user_answer: str, target_text: str) -> bool:
-    prompt = f'''You are an expert in Kinyarwanda and English. Evaluate if the user's answer is a correct and accurate translation of the target text. 
-    Consider common synonyms and minor grammatical variations, but reject answers that are clearly wrong, incomplete, or irrelevant.
-    
-    User's Answer: '{user_answer}'
-    Target Text: '{target_text}'
-    
-    Respond ONLY with 'Correct' or 'Incorrect'.'''
-    model = genai.GenerativeModel(GEMMA_MODEL_NAME)
-    response = await model.generate_content_async(prompt)
-    return "correct" in response.text.strip().lower()
+
 
 # --- API Endpoints ---
 @app.get("/favicon.ico", include_in_schema=False)
