@@ -151,6 +151,8 @@
     let currentChallengeId = null;
     let lives = {{ lives | int(3) }};
     let score = {{ score | int(0) }};
+    let gusakuzaState = 'done'; // 'intro', 'riddle', 'done'
+    let currentRiddle = '';
 
     const answerInput = document.getElementById('answer-input');
     const submitBtn = document.getElementById('submit-btn');
@@ -161,6 +163,15 @@
     const correctAnswerFeedback = document.getElementById('correct-answer-feedback');
     const sourceTextElement = document.getElementById('source-text');
     const contextTextElement = document.getElementById('context-text');
+
+    // Add a new button for "Soma"
+    const somaBtn = document.createElement('button');
+    somaBtn.id = 'soma-btn';
+    somaBtn.textContent = 'Soma';
+    somaBtn.className = 'btn w-full';
+    somaBtn.onclick = () => handleSoma();
+    challengeContent.appendChild(somaBtn);
+
 
     document.addEventListener('DOMContentLoaded', () => {
         updateScoreboard();
@@ -178,9 +189,11 @@
     async function fetchApi(url, options = {}) {
         newChallengeBtn.disabled = true;
         submitBtn.disabled = true; // Disable submit button during API call
+        somaBtn.disabled = true;
         const response = await fetch(url, options);
         newChallengeBtn.disabled = false;
         submitBtn.disabled = false; // Re-enable submit button
+        somaBtn.disabled = false;
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
             throw new Error(errorData.detail);
@@ -194,25 +207,51 @@
         answerInput.value = '';
         feedbackMessage.textContent = '';
         correctAnswerFeedback.textContent = '';
+        gusakuzaState = 'done';
 
         try {
             const data = await fetchApi('/get_challenge?difficulty=1');
             currentChallengeId = data.challenge_id;
             
-            if (data.challenge_type === 'image_description') {
-                sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                instructionElement.textContent = 'Describe the image in Kinyarwanda or English:';
+            if (data.challenge_type === 'gusakuza') {
+                gusakuzaState = 'intro';
+                currentRiddle = data.source_text;
+                instructionElement.textContent = "Umukino w'Ibisakuzo";
+                sourceTextElement.textContent = "Sakwe sakwe!";
+                contextTextElement.textContent = "";
+                answerInput.classList.add('hidden');
+                submitBtn.classList.add('hidden');
+                somaBtn.classList.remove('hidden');
             } else {
-                sourceTextElement.textContent = data.source_text;
-                instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+                answerInput.classList.remove('hidden');
+                submitBtn.classList.remove('hidden');
+                somaBtn.classList.add('hidden');
+                if (data.challenge_type === 'image_description') {
+                    sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
+                    instructionElement.textContent = 'Describe the image in Kinyarwanda or English:';
+                } else {
+                    sourceTextElement.textContent = data.source_text;
+                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+                }
+                contextTextElement.textContent = data.context || '';
             }
 
-            contextTextElement.textContent = data.context || '';
             challengeContent.classList.remove('hidden');
         } catch (error) {
             instructionElement.textContent = 'Failed to load challenge. Try again.';
             console.error("Error fetching new challenge:", error);
         }
+    }
+
+    function handleSoma() {
+        if (gusakuzaState !== 'intro') return;
+        gusakuzaState = 'riddle';
+        sourceTextElement.textContent = currentRiddle;
+        instructionElement.textContent = "Soma!";
+        somaBtn.classList.add('hidden');
+        answerInput.classList.remove('hidden');
+        submitBtn.classList.remove('hidden');
+        answerInput.placeholder = "Subiza igisakuzo...";
     }
 
     async function submitAnswer() {

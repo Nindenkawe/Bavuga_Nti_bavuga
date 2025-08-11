@@ -93,6 +93,21 @@ class Challenge(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+class GameState(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    # Use a unique identifier for the single game state document
+    state_name: str = "global"
+    lives: int = 3
+    score: int = 0
+    # Persist incorrect answers to influence the next challenge
+    incorrect_answers: list[str] = []
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+
+
 class Submission(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     challenge_id: PyObjectId
@@ -157,16 +172,39 @@ async def get_total_score() -> int:
     result = await database["submissions"].aggregate(pipeline).to_list(length=1)
     return result[0]["totalScore"] if result else 0
 
+async def get_game_state() -> GameState:
+    """Retrieves the current game state, creating it if it doesn't exist."""
+    database = get_database()
+    state_data = await database["game_state"].find_one({"state_name": "global"})
+    if state_data:
+        return GameState(**state_data)
+    else:
+        # Create and return the default state
+        logger.info("No game state found, creating a default one.")
+        default_state = GameState()
+        await database["game_state"].insert_one(default_state.model_dump(by_alias=True, exclude_none=True))
+        return default_state
+
+async def update_game_state(state: GameState):
+    """Updates the game state in the database."""
+    database = get_database()
+    await database["game_state"].update_one(
+        {"state_name": "global"},
+        {"$set": state.model_dump(exclude={"id", "state_name"})},
+        upsert=True
+    )
+    logger.info(f"Updated game state: Lives={state.lives}, Score={state.score}")
+
 async def get_recent_challenge_texts(limit: int = 20) -> list[str]:
     """Fetches the text of recent translation challenges to avoid repetition."""
     database = get_database()
     challenges = database["challenges"].find(
-        {"original_text": {"$ne": None}},
-        {"original_text": 1, "_id": 0}
-    ).sort("timestamp", -1).limit(limit)
+        {"source_text": {"$ne": None}},
+        {"source_text": 1, "_id": 0}
+    ).sort("_id", -1).limit(limit)
     
     texts = await challenges.to_list(length=limit)
-    return [item["original_text"] for item in texts]
+    return [item["source_text"] for item in texts]
 
 async def get_challenge_feedback(challenge_id: str) -> list[dict]:
     """Retrieves feedback for a specific challenge."""

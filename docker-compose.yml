@@ -1,19 +1,37 @@
+# Set a project name to create shorter, predictable container/network names
+name: bavuga-app
+
 services:
-  web:
+  app: # Renamed from 'backend' for convention
     build: .
+    image: bavuga-app:latest # Give the built image a clean name
+    container_name: bavuga-app # Explicit container name
+    restart: unless-stopped
     ports:
       - "8000:8000"
-    env_file:
-      - ./.env
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MONGODB_URI=mongodb://database:27017 # Use the new service name 'database'
+      - DATABASE_NAME=language_app
     depends_on:
-      - db
+      database:
+        condition: service_healthy # Wait for the DB to be healthy, not just started
 
-  db:
+  database: # Renamed from 'db' for clarity
     image: mongo:latest
+    container_name: bavuga-db # Explicit container name
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      # Use mongosh to check if the server is ready to accept connections
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   mongo-data:
