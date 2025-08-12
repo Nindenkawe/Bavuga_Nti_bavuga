@@ -4,7 +4,8 @@ uvicorn[standard]
 
 # AI and Google Cloud
 google-generativeai
-google-adk
+google-cloud-speech
+google-cloud-texttospeech
 
 # Database
 motor

@@ -10,11 +10,14 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install  -r requirements.txt
 
+# List installed packages for debugging
+RUN pip list
+
 # Copy the rest of the application's code into the container at /app
 COPY . .
 
-# Expose port 8000 to allow communication to the app
-EXPOSE 8000
+# Expose port 2500 to allow communication to the app
+EXPOSE 2500
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "2500"]

@@ -101,6 +101,8 @@ class GameState(BaseModel):
     score: int = 0
     # Persist incorrect answers to influence the next challenge
     incorrect_answers: list[str] = []
+    # Store a riddle while waiting for the user to respond "soma"
+    pending_riddle: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

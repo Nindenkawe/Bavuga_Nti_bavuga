@@ -129,7 +129,15 @@
                     <p id="source-text" class="text-2xl mb-3 p-4 text-center source-text-display bg-black bg-opacity-20 rounded-lg"></p>
                     <p id="context-text" class="text-center context-text"></p>
                     <input type="text" id="answer-input" placeholder="Your answer..." class="w-full">
-                    <button id="submit-btn" onclick="submitAnswer()" class="w-full btn">Submit</button>
+                    <div class="flex space-x-2">
+                        <button id="submit-btn" class="w-full btn">Submit</button>
+                        <button id="mic-btn" class="p-4 btn bg-red-500 hover:bg-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button id="soma-btn" class="w-full btn hidden">Soma</button>
                 </div>
             </div>
 
@@ -139,9 +147,10 @@
             </div>
 
             <div class="flex justify-center">
-                <button id="new-challenge-btn" onclick="getNewChallenge()" class="btn">New Challenge</button>
+                <button id="new-challenge-btn" class="btn">New Challenge</button>
             </div>
         </div>
+        <audio id="audio-player" class="hidden"></audio>
     </div>
 
     <script>
@@ -165,12 +174,13 @@
     const contextTextElement = document.getElementById('context-text');
 
     // Add a new button for "Soma"
-    const somaBtn = document.createElement('button');
-    somaBtn.id = 'soma-btn';
-    somaBtn.textContent = 'Soma';
-    somaBtn.className = 'btn w-full';
-    somaBtn.onclick = () => handleSoma();
-    challengeContent.appendChild(somaBtn);
+    const somaBtn = document.getElementById('soma-btn');
+    const micBtn = document.getElementById('mic-btn');
+    const audioPlayer = document.getElementById('audio-player');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
 
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -180,6 +190,26 @@
 
     submitBtn.addEventListener('click', submitAnswer);
     newChallengeBtn.addEventListener('click', getNewChallenge);
+    somaBtn.addEventListener('click', handleSoma);
+    micBtn.addEventListener('click', toggleRecording);
+
+    async function handleSoma() {
+        if (gusakuzaState !== 'intro') return;
+        
+        try {
+            const data = await fetchApi('/soma', { method: 'POST' });
+            gusakuzaState = 'riddle';
+            currentChallengeId = data.challenge_id;
+            sourceTextElement.textContent = data.source_text;
+            instructionElement.textContent = "Soma!";
+            somaBtn.classList.add('hidden');
+            answerInput.classList.remove('hidden');
+            submitBtn.parentElement.classList.remove('hidden');
+        } catch (error) {
+            instructionElement.textContent = 'Failed to get riddle. Try again.';
+            console.error("Error during 'soma':", error);
+        }
+    }
 
     function updateScoreboard() {
         document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
@@ -188,15 +218,24 @@
 
     async function fetchApi(url, options = {}) {
         newChallengeBtn.disabled = true;
-        submitBtn.disabled = true; // Disable submit button during API call
+        submitBtn.disabled = true;
         somaBtn.disabled = true;
+        micBtn.disabled = true;
+        
         const response = await fetch(url, options);
+        
         newChallengeBtn.disabled = false;
-        submitBtn.disabled = false; // Re-enable submit button
+        submitBtn.disabled = false;
         somaBtn.disabled = false;
+        micBtn.disabled = false;
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
             throw new Error(errorData.detail);
+        }
+        // For audio, we want the blob, not json
+        if (response.headers.get('Content-Type')?.includes('audio/')) {
+            return await response.blob();
         }
         return await response.json();
     }
@@ -213,18 +252,17 @@
             const data = await fetchApi('/get_challenge?difficulty=1');
             currentChallengeId = data.challenge_id;
             
-            if (data.challenge_type === 'gusakuza') {
+            if (data.challenge_type === 'gusakuza_init') {
                 gusakuzaState = 'intro';
-                currentRiddle = data.source_text;
                 instructionElement.textContent = "Umukino w'Ibisakuzo";
                 sourceTextElement.textContent = "Sakwe sakwe!";
                 contextTextElement.textContent = "";
                 answerInput.classList.add('hidden');
-                submitBtn.classList.add('hidden');
+                submitBtn.parentElement.classList.add('hidden');
                 somaBtn.classList.remove('hidden');
             } else {
                 answerInput.classList.remove('hidden');
-                submitBtn.classList.remove('hidden');
+                submitBtn.parentElement.classList.remove('hidden');
                 somaBtn.classList.add('hidden');
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
@@ -241,17 +279,6 @@
             instructionElement.textContent = 'Failed to load challenge. Try again.';
             console.error("Error fetching new challenge:", error);
         }
-    }
-
-    function handleSoma() {
-        if (gusakuzaState !== 'intro') return;
-        gusakuzaState = 'riddle';
-        sourceTextElement.textContent = currentRiddle;
-        instructionElement.textContent = "Soma!";
-        somaBtn.classList.add('hidden');
-        answerInput.classList.remove('hidden');
-        submitBtn.classList.remove('hidden');
-        answerInput.placeholder = "Subiza igisakuzo...";
     }
 
     async function submitAnswer() {
@@ -272,8 +299,13 @@
             feedbackMessage.textContent = data.message;
             correctAnswerFeedback.textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
             
+            // Synthesize and play the response
+            const textToSpeak = data.is_correct ? data.message : `${data.message}. The correct answer was: ${data.correct_answer}`;
+            await synthesizeAndPlay(textToSpeak);
+
             if (lives <= 0) {
                 alert('Game Over!');
+                await synthesizeAndPlay("Game Over!");
                 lives = 3;
                 score = 0;
                 updateScoreboard();
@@ -283,6 +315,69 @@
         } catch (error) {
             feedbackMessage.textContent = `Error: ${error.message}`;
             console.error("Error submitting answer:", error);
+        }
+    }
+
+    async function toggleRecording() {
+        if (isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            micBtn.classList.remove('bg-green-500');
+            micBtn.classList.add('bg-red-500');
+            micBtn.disabled = true; // Disable until processing is done
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                    audioChunks = [];
+                    await transcribeAndFill(audioBlob);
+                    micBtn.disabled = false;
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                micBtn.classList.remove('bg-red-500');
+                micBtn.classList.add('bg-green-500');
+
+            } catch (error) {
+                console.error("Error accessing microphone:", error);
+                alert("Could not access microphone. Please ensure you have given permission.");
+            }
+        }
+    }
+
+    async function transcribeAndFill(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio_file', audioBlob, 'recording.webm');
+        
+        try {
+            instructionElement.textContent = 'Transcribing...';
+            const data = await fetchApi('/transcribe', { method: 'POST', body: formData });
+            answerInput.value = data.transcript;
+            instructionElement.textContent = 'Transcription complete.';
+        } catch (error) {
+            console.error("Error during transcription:", error);
+            instructionElement.textContent = 'Transcription failed.';
+        }
+    }
+
+    async function synthesizeAndPlay(text) {
+        try {
+            const formData = new FormData();
+            formData.append('text', text);
+            const audioBlob = await fetchApi('/synthesize', { method: 'POST', body: formData });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+        } catch (error) {
+            console.error("Error synthesizing speech:", error);
         }
     }
 })();

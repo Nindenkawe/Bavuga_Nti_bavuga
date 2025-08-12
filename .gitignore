@@ -16,10 +16,19 @@ pyvenv.cfg
 
 # Environment variables
 .env
+*.env
 
-# VSCode
-.vscode/
+# Google Cloud Credentials
+google-credentials.json
 
-# Operating System Files
-.DS_Store
-Thumbs.db
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+venv.bak/
+venv.old/

@@ -1,172 +1,196 @@
-That's an excellent idea. A `sessionguide.md` file will serve as a perfect script and reference for your talk. It will ensure you hit all the key points and provide clear, well-structured examples for your audience.
+# Building a Local-First Generative AI App
 
-Here is the content for your `sessionguide.md` file, incorporating all the elements you requested.
+Welcome everyone! Today, we're going to build and run a fun, educational Kinyarwanda language game called "Bavuga Ntibavuga," powered by Google's Generative AI. We'll focus on a local-first development workflow, using Docker Compose to run our entire application stack with a single command.
 
------
-
-### **`sessionguide.md`**
-
-# Session Guide: Building a Local-First Generative AI App
-
-Welcome everyone\! Today, we're going to build and run a fun, educational Kinyarwanda vocabulary game called "Bavuga Ntibavuga" powered by the Gemini API. We'll focus on a local-first development workflow, using Docker Compose to run our entire application stack with a single command.
+This guide will walk you through the key features, the technology behind them, and how to get everything running on your local machine.
 
 -----
 
-## 1\. The Core Idea
+## 1. The Core Idea
 
-"Bavuga Ntibavuga" is a language learning game that leverages generative AI to create dynamic challenges. Instead of static questions, our app uses the Gemini API to generate riddles, proverbs, and translation tasks in real-time.
-
------
-
-## 2\. Our Tech Stack
-
-  * **Backend:** FastAPI (Python)
-  * **Database:** MongoDB
-  * **AI:** Gemini API via the `google_adk` library
-  * **Containerization:** Docker Compose
-  * **Frontend:** Vue.js (not covered in depth, but part of the full stack)
+"Bavuga Ntibavuga" is a language learning game that leverages generative AI to create dynamic challenges. Instead of static questions, our app uses the Gemini API to generate riddles ("Gusakuza"), proverbs, and translation tasks in real-time. It also features live audio interaction, allowing users to speak their answers and hear the AI's responses.
 
 -----
 
-## 3\. Getting Started
+## 2. Our Tech Stack
 
-For this session, we'll use **GitHub Codespaces** to ensure a zero-setup environment for everyone. Just open the repository and click "Open in Codespaces."
-
-We'll also be using the **Gemini-CLI** as our coding assistant. It's a fantastic tool that allows us to generate code snippets and solve problems directly from the terminal.
+*   **Backend:** FastAPI (Python)
+*   **Database:** MongoDB
+*   **AI Models:**
+    *   **Core Logic:** Google Gemini API via the `google-generativeai` library.
+    *   **Speech-to-Text:** Google Cloud Speech-to-Text API via `google-cloud-speech`.
+    *   **Text-to-Speech:** Google Cloud Text-to-Speech API via `google-cloud-texttospeech`.
+*   **Containerization:** Docker Compose
+*   **Frontend:** Vanilla HTML, TailwindCSS, and JavaScript.
 
 -----
 
-## 4\. Dissecting the Code: The AI-Powered Backend
+## 3. Getting Started: Authentication is Key
 
-Let's dive into the most important parts of our `main.py` file, which handles all the backend logic.
+Our application interacts with multiple Google Cloud services, which require proper authentication.
 
-### a) The AI Agent
+*   **Gemini API:** Uses an API Key.
+*   **Speech & Text-to-Speech APIs:** Use Application Default Credentials (ADC) via a service account JSON file.
 
-We start by configuring a persona for our AI. This is a crucial step that tells Gemini what role to play, ensuring the challenges it generates are relevant and high-quality.
+To simplify this setup, we've created a script to automate the process.
 
-**`main.py` Snippet:**
+### Automated Setup
 
-```python
-agent = Agent(
-    llm=Gemini(model=GEMMA_MODEL_NAME),
-    persona=(
-        "You are a master of Kinyarwanda and English, specializing in linguistics, "
-        "culture, and word games for a Rwandan audience. Your goal is to create "
-        "engaging and educational challenges that adapt to the user's performance."
-    ),
-)
+Before running the application, execute the setup script from your terminal. You will need to provide your Google Cloud Project ID as an argument.
+
+```bash
+# Make the script executable
+chmod +x setup_gcloud.sh
+
+# Run the script with your Project ID
+./setup_gcloud.sh YOUR_PROJECT_ID
 ```
 
-**Explanation:** This code snippet creates an `Agent` instance from the `google_adk` library, which provides a convenient, chat-focused interface to the Gemini API. We're telling the AI to act as a "master of Kinyarwanda and English," which will guide its responses.
+This script will enable the necessary APIs, create a service account with the correct permissions, and generate a `google-credentials.json` file in your project directory. This file is automatically ignored by Git to keep your credentials secure.
 
-### b) Generating a Challenge
+-----
 
-The `generate_challenge` function is where the magic happens. It uses our AI agent to create a new, unique challenge based on the game's state (e.g., the user's difficulty level and past answers).
+## 4. Dissecting the Code: The AI-Powered Backend
+
+Let's dive into the most important parts of our `main.py` file.
+
+### a) The AI Model
+
+Instead of a high-level agent library, we interact directly with the `google-generativeai` library for more control. We initialize a model that will be used for generating challenges and evaluating answers.
 
 **`main.py` Snippet:**
-
 ```python
-async def generate_challenge(difficulty: int, previous_answers: list[str] = None) -> dict:
+# --- Generative AI Configuration ---
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY environment variable is required.")
+genai.configure(api_key=api_key)
+
+# --- AI Model Configuration ---
+model = genai.GenerativeModel(GEMMA_MODEL_NAME)
+```
+**Explanation:** We first configure our API key and then instantiate the `GenerativeModel`. This `model` object is our primary interface to the Gemini API for all text-based generation tasks.
+
+### b) Generating a Challenge: The "Gusakuza" Flow
+
+The `generate_challenge` function now has more complex logic to handle the two-step "Gusakuza" (riddle) game.
+
+**`main.py` Snippet:**
+```python
+async def generate_challenge(difficulty: int, state: GameState) -> dict:
     # ... (code for selecting challenge type)
+    challenge_type = random.choice(challenge_types)
+
     if challenge_type == "gusakuza":
         prompt = "Generate a Kinyarwanda riddle (igisakuzo). The response should be in the format 'riddle|answer'."
-    else:
-        prompt = f"Generate a {challenge_type} challenge for a {level} user."
-        
-    response = await agent.chat(prompt)
-    
-    # ... (code for parsing the response)
-    
-    return {
-        "challenge_type": challenge_type,
-        "source_text": parts[0].strip(),
-        "target_text": parts[1].strip(),
-        "context": parts[2].strip() if len(parts) > 2 else '',
-    }
+        response = await model.generate_content_async(prompt)
+        # This is the initial "Sakwe sakwe!" part.
+        return {
+            "challenge_type": "gusakuza_init",
+            "source_text": "Sakwe sakwe!",
+            "target_text": response.text, # Store "riddle|answer"
+            "context": "Reply with 'soma' to get the riddle.",
+        }
+    # ... (rest of the logic)
 ```
-
-**Explanation:** We construct a specific prompt for our AI agent, telling it exactly what we need, like "Generate a Kinyarwanda riddle" or "Generate an `eng_to_kin_phrase`." We also specify the response format (`riddle|answer`) to make parsing the output easy.
-
-**Example of Expected Response:**
-
-  * **Prompt:** `Generate a gusakuza challenge. The response should be in the format 'riddle|answer'.`
-  * **Expected AI Output:** `Ipfundo y'umusaza|urubuto rw'umwungu`
-  * **Parsed into a Challenge:**
-      * `challenge_type`: `gusakuza`
-      * `source_text`: `Ipfundo y'umusaza`
-      * `target_text`: `urubuto rw'umwungu`
+**Explanation:** When a `gusakuza` challenge is chosen, the app first generates the riddle and its answer from the AI. However, it stores the answer internally and sends a special `gusakuza_init` challenge to the frontend. The user first sees "Sakwe sakwe!" and must respond with "soma" (handled by a separate `/soma` endpoint) to receive the actual riddle.
 
 ### c) Evaluating the Answer
 
-The `evaluate_answer` function uses Gemini again, this time to act as an expert judge. It takes the user's answer and the correct answer and determines if the user's response is accurate, even considering synonyms or minor variations.
+The `evaluate_answer` function uses Gemini to act as an expert judge, determining if the user's response is accurate.
 
 **`main.py` Snippet:**
-
 ```python
-async def evaluate_answer(user_answer: str, target_text: str) -> bool:
-    prompt = f"You are an expert in Kinyarwanda and English. Evaluate if the user's answer '{user_answer}' is a correct and accurate translation of the target text '{target_text}'. Consider common synonyms and minor grammatical variations, but reject answers that are clearly wrong, incomplete, or irrelevant. Respond ONLY with 'Correct' or 'Incorrect'."
-    response = await agent.chat(prompt)
+async def evaluate_answer(user_answer: str, target_text: str, challenge_type: str) -> bool:
+    # ... (prompt construction logic)
+    prompt = (
+        f"You are an expert in Kinyarwanda riddles (Ibisakuzo). The riddle's correct answer is '{target_text}'. "
+        f"The user guessed '{user_answer}'. "
+        # ...
+        f"Respond ONLY with 'Correct' or 'Incorrect'."
+    )
+    response = await model.generate_content_async(prompt)
     return "correct" in response.text.lower()
 ```
-
 **Explanation:** The prompt here is very specific, instructing the AI to respond *only* with "Correct" or "Incorrect." This allows us to use a simple string check to get a reliable boolean result.
 
-**Example of Expected Response:**
+### d) The Live Audio Chat Feature
 
-  * **`user_answer`**: `Umwana ni uw'uwo yibarutse`
-  * **`target_text`**: `A child is one who gives birth to.`
-  * **Expected AI Output:** `Incorrect`
+We've added two new endpoints to handle voice interaction.
+
+**`main.py` Snippet:**
+```python
+# Initialize Google Cloud clients
+speech_client = speech.SpeechClient()
+tts_client = texttospeech.TextToSpeechClient()
+
+@app.post("/transcribe")
+async def transcribe_audio(audio_file: UploadFile = File(...)):
+    # ... (code to read audio file)
+    audio = speech.RecognitionAudio(content=content)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+        sample_rate_hertz=48000,
+        language_code="rw-RW",
+    )
+    response = speech_client.recognize(config=config, audio=audio)
+    # ... (return transcript)
+
+@app.post("/synthesize")
+async def synthesize_speech(text: str = Form(...)):
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="rw-RW", name="rw-RW-Standard-A"
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+    response = tts_client.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
+    return StreamingResponse(io.BytesIO(response.audio_content), media_type="audio/mpeg")
+```
+**Explanation:** The `/transcribe` endpoint takes a recorded audio file and uses the Speech-to-Text API to convert it into Kinyarwanda text. The `/synthesize` endpoint does the reverse, converting a string of text into natural-sounding Kinyarwanda speech, which is then streamed back to the user.
 
 -----
 
-## 5\. Running the Application with Docker Compose
+## 5. Running the Application with Docker Compose
 
-This is the final and most exciting part. Docker Compose allows us to run our entire application stack—the FastAPI backend and the MongoDB database—with a single command, making local development incredibly easy.
+Docker Compose allows us to run our entire application stack—the FastAPI backend and the MongoDB database—with a single command.
 
 **`docker-compose.yml` Snippet:**
-
-```dockercompose
-# Set a project name to create shorter, predictable container/network names
+```yaml
 name: bavuga-app
 
 services:
-  app: # Renamed from 'backend' for convention
+  app:
     build: .
-    container_name: bavuga-app # Explicit container name
+    image: bavuga-app:latest
+    container_name: bavuga-app
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - MONGODB_URI=mongodb://database:27017 # Use the new service name 'database'
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
+      - MONGODB_URI=mongodb://database:27017
+      - DATABASE_NAME=language_app
+    volumes:
+      - ./google-credentials.json:/app/google-credentials.json:ro
     depends_on:
       database:
-        condition: service_healthy # Wait for the DB to be healthy
+        condition: service_healthy
 
-  database: # Renamed from 'db' for clarity
+  database:
     image: mongo:latest
-    container_name: bavuga-db # Explicit container name
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-volumes:
-  mongo-data:
+    # ... (rest of the database configuration)
 ```
-
 **Explanation:**
+*   The `app` service now includes a `GOOGLE_APPLICATION_CREDENTIALS` environment variable, which tells the Google Cloud libraries where to find the authentication file.
+*   The `volumes` section mounts our local `google-credentials.json` file into the container in read-only (`:ro`) mode for security.
 
-  * The `app` service builds our application from the current directory and exposes it on port `8000`.
-  * It passes our `GEMINI_API_KEY` from our environment to the container, keeping it secure.
-  * The `database` service uses the official `mongo:latest` image, and `volumes` ensures our data persists even if the container is restarted.
-  * We've also added a `healthcheck` to the database. This is a best practice that ensures our `app` service only starts after the database is truly ready to accept connections.
-
-To run everything, we simply use the command: `docker-compose up`.
+To run everything, first complete the authentication setup, then use the command:
+```bash
+docker-compose up --build -d
+```
+Your application will be available at `http://localhost:8000`.

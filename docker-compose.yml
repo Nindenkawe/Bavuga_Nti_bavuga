@@ -8,11 +8,14 @@ services:
     container_name: bavuga-app # Explicit container name
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "2500:2500"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
       - MONGODB_URI=mongodb://database:27017 # Use the new service name 'database'
       - DATABASE_NAME=language_app
+    volumes:
+      - ./google-credentials.json:/app/google-credentials.json:ro
     depends_on:
       database:
         condition: service_healthy # Wait for the DB to be healthy, not just started

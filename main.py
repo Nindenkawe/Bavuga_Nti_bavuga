@@ -6,8 +6,7 @@ from typing import Optional
 from contextlib import asynccontextmanager
 import asyncio
 import re
-from google_adk.agent import Agent
-from google_adk.llm.gemini import Gemini
+from google.generativeai import GenerativeModel
 
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, Response
@@ -36,7 +35,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
-GEMMA_MODEL_NAME = "gemini-2.5-flash-latest"
+GEMMA_MODEL_NAME = "gemini-1.5-flash-latest"
 MAX_RETRIES = 3
 BASE_DELAY = 1
 POINTS_PER_CORRECT_ANSWER = 10
@@ -63,6 +62,7 @@ class ChallengeResponse(BaseModel):
     source_text: str
     context: Optional[str] = None
     challenge_type: str
+    error_message: Optional[str] = None
 
 class SubmissionResponse(BaseModel):
     message: str
@@ -78,15 +78,8 @@ class AIServiceError(Exception):
     """Custom exception for AI service failures."""
     pass
 
-# --- AI Agent Configuration ---
-agent = Agent(
-    llm=Gemini(model=GEMMA_MODEL_NAME),
-    persona=(
-        "You are a master of Kinyarwanda and English, specializing in linguistics, "
-        "culture, and word games for a Rwandan audience. Your goal is to create "
-        "engaging and educational challenges that adapt to the user's performance."
-    ),
-)
+# --- AI Model Configuration ---
+model = genai.GenerativeModel(GEMMA_MODEL_NAME)
 
 # --- Generative AI Functions ---
 async def generate_challenge(difficulty: int, state: GameState) -> dict:
@@ -107,7 +100,7 @@ async def generate_challenge(difficulty: int, state: GameState) -> dict:
         if state.incorrect_answers:
             prompt += f" Consider these previous incorrect answers: {', '.join(state.incorrect_answers)}"
 
-        response = await agent.chat(prompt)
+        response = await model.generate_content_async(prompt)
         
         # Assuming the agent returns a parsable string
         parts = response.text.split('|')
@@ -129,11 +122,13 @@ async def generate_challenge(difficulty: int, state: GameState) -> dict:
                 "context": parts[2].strip() if len(parts) > 2 else '',
             }
         elif challenge_type == "gusakuza":
+            # This is the initial "Sakwe sakwe!" part.
+            # The actual riddle is stored in the game state.
             return {
-                "challenge_type": challenge_type,
-                "source_text": parts[0].strip(),
-                "target_text": parts[1].strip(),
-                "context": "Sakwe sakwe!",
+                "challenge_type": "gusakuza_init",
+                "source_text": "Sakwe sakwe!",
+                "target_text": response.text, # Store "riddle|answer"
+                "context": "Reply with 'soma' to get the riddle.",
             }
         else:  # eng_to_kin_phrase
             return {
@@ -146,10 +141,7 @@ async def generate_challenge(difficulty: int, state: GameState) -> dict:
     except Exception as e:
         logger.error(f"Error generating challenge with agent: {e}")
         return {
-            "challenge_type": "eng_to_kin_phrase",
-            "source_text": "Service Unavailable",
-            "target_text": "AI service is currently down. Please try again later.",
-            "context": "We are unable to generate new challenges at this time.",
+            "error_message": "AI service is currently down. Please try again later."
         }
 
 
@@ -170,7 +162,7 @@ async def evaluate_answer(user_answer: str, target_text: str, challenge_type: st
                 f"Consider common synonyms and minor grammatical variations, but reject answers that are clearly wrong, "
                 f"incomplete, or irrelevant. Respond ONLY with 'Correct' or 'Incorrect'."
             )
-        response = await agent.chat(prompt)
+        response = await model.generate_content_async(prompt)
         return "correct" in response.text.lower()
     except Exception as e:
         logger.error(f"Error evaluating answer with agent: {e}")
@@ -193,13 +185,61 @@ async def home(request: Request):
 async def get_challenge_endpoint(difficulty: int = 1):
     current_state = await get_game_state()
     challenge_data = await generate_challenge(difficulty, current_state)
-    
+
+    if "error_message" in challenge_data:
+        raise HTTPException(status_code=503, detail=challenge_data["error_message"])
+
+    if challenge_data["challenge_type"] == "gusakuza_init":
+        # If it's the start of a riddle, don't save a challenge yet.
+        # Instead, save the pending riddle to the game state.
+        current_state.pending_riddle = challenge_data["target_text"]
+        await update_game_state(current_state)
+        
+        return ChallengeResponse(
+            challenge_id="gusakuza_init", # Special ID for the frontend
+            source_text=challenge_data["source_text"],
+            context=challenge_data["context"],
+            challenge_type="gusakuza_init"
+        )
+
     challenge = Challenge(
         **challenge_data,
         difficulty=difficulty
     )
     challenge_id = await save_challenge(challenge)
     
+    return ChallengeResponse(
+        challenge_id=str(challenge_id),
+        source_text=challenge.source_text,
+        context=challenge.context,
+        challenge_type=challenge.challenge_type
+    )
+
+@app.post("/soma", response_model=ChallengeResponse)
+async def soma_endpoint():
+    """Endpoint for when the user responds 'soma' to 'sakwe sakwe'."""
+    current_state = await get_game_state()
+    if not current_state.pending_riddle:
+        raise HTTPException(status_code=400, detail="No pending riddle found.")
+
+    try:
+        riddle, answer = current_state.pending_riddle.split('|')
+    except ValueError:
+        raise HTTPException(status_code=500, detail="Invalid riddle format in game state.")
+
+    challenge = Challenge(
+        challenge_type="gusakuza",
+        source_text=riddle.strip(),
+        target_text=answer.strip(),
+        difficulty=1, # Or determine difficulty differently
+        context="Igisakuzo"
+    )
+    challenge_id = await save_challenge(challenge)
+
+    # Clear the pending riddle from the state
+    current_state.pending_riddle = None
+    await update_game_state(current_state)
+
     return ChallengeResponse(
         challenge_id=str(challenge_id),
         source_text=challenge.source_text,
@@ -258,7 +298,74 @@ async def submit_answer_endpoint(challenge_id: str = Form(...), user_answer: str
     await update_game_state(current_state)
     return SubmissionResponse(**response_data)
 
+# --- Audio Feature Endpoints ---
+from fastapi import File, UploadFile
+from google.cloud import speech, texttospeech
+from fastapi.responses import StreamingResponse
+import io
+
+# Initialize Google Cloud clients
+speech_client = speech.SpeechClient()
+tts_client = texttospeech.TextToSpeechClient()
+
+class TranscribeResponse(BaseModel):
+    transcript: str
+
+@app.post("/transcribe", response_model=TranscribeResponse)
+async def transcribe_audio(audio_file: UploadFile = File(...)):
+    """Receives audio, transcribes it, and returns the text."""
+    try:
+        content = await audio_file.read()
+        
+        audio = speech.RecognitionAudio(content=content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+            sample_rate_hertz=48000, # Common for webm
+            language_code="rw-RW",  # Kinyarwanda
+            # You can add alternative language codes if needed
+            # alternative_language_codes=["en-US"],
+        )
+
+        response = speech_client.recognize(config=config, audio=audio)
+        
+        if not response.results or not response.results[0].alternatives:
+            raise HTTPException(status_code=400, detail="Could not transcribe audio.")
+            
+        transcript = response.results[0].alternatives[0].transcript
+        return TranscribeResponse(transcript=transcript)
+
+    except Exception as e:
+        logger.error(f"Error during transcription: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process audio: {e}")
+
+
+@app.post("/synthesize")
+async def synthesize_speech(text: str = Form(...)):
+    """Receives text and converts it to speech."""
+    try:
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+
+        # Configure the voice. You can choose from various voices.
+        # 'rw-RW-Standard-A' is a Kinyarwanda voice.
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="rw-RW", name="rw-RW-Standard-A"
+        )
+
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+
+        response = tts_client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+
+        return StreamingResponse(io.BytesIO(response.audio_content), media_type="audio/mpeg")
+
+    except Exception as e:
+        logger.error(f"Error during speech synthesis: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to synthesize speech: {e}")
+
 # --- Main Execution ---
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=2500)
