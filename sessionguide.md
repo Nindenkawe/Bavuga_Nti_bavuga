@@ -1,10 +1,10 @@
 # Welcome to the Bavuga Ntibavuga Developer's Guide
 
-Hello, fellow developer! Welcome to the official guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. If you're excited about building smart, interactive applications that feel alive, you're in the right place.
+Welcome to this guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. designed to showcase what we have been learning in the **Build with Ai** organised by **GDG Kigali**. 
 
-This guide is your all-access pass. We'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
+This guide will show you the aproach i took in making this game web app with a local context at its core. I'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
 
-### Choose Your Adventure
+### Choose Your Mode
 
 You have two paths for running this application. Choose the one that fits your goal:
 
@@ -13,7 +13,7 @@ You have two paths for running this application. Choose the one that fits your g
     *   **Requirements:** Only a `GEMINI_API_KEY`.
     *   **Features:** Uses the powerful multimodal Gemini API for game logic and speech-to-text, with a simple JSON file for a database. No Docker, no billing required.
 
-2.  **Path B: The Full Production Experience**
+2.  **Path B: The Full Production Mode**
     *   **Goal:** Deploy the complete, production-ready application.
     *   **Requirements:** Docker, a billing-enabled Google Cloud project, and API keys.
     *   **Features:** Uses dedicated, high-performance Google Cloud APIs for audio and a robust MongoDB database, all managed by Docker.
@@ -61,10 +61,13 @@ This is your playground for rapid development. You'll be amazed at what you can 
     Our `run.sh` script makes this easy. The `--dev` flag activates this special mode.
     ```bash
     # Make the script executable (you only need to do this once)
-    chmod +x run.sh
+    chmod +x start.sh
 
     # Engage Gemini Dev Mode!
-    ./run.sh --dev
+    ./start.sh --dev
+
+    # To see the Gemini API requests and responses in real-time, use the --debug flag:
+    ./start.sh --dev --debug
     ```
 
 Your local server is now running at `http://localhost:2500`. You can now use the microphone in the app to speak your answers!
@@ -105,66 +108,94 @@ This path gives you a full, production-grade deployment using dedicated, high-pe
 
 -----
 
-## 4. How Gemini is Used: A Look Under the Hood
+## 4. Understanding the Magic: How Gemini Powers Each Game Mode
 
-This application uses the Gemini model for more than just simple tasks. It uses several techniques to get high-quality, reliable responses from the model. This is a process called **grounding**.
+This application is more than just a game; it's a practical demonstration of how to creatively interact with a powerful Large Language Model (LLM) like Gemini. By sending the model different types of data and instructions (a process called **grounding**), we can shape its output to create diverse and engaging experiences.
 
-### Grounding Technique 1: Retrieval-Augmented Generation (RAG)
+Let's explore how each game mode uses Gemini in a unique way.
 
-**RAG** is a technique where you provide the model with information to "ground" its response in reality. In our case, we use the `riddles.json` file to give the model examples of Kinyarwanda riddles.
+---
 
-*   **How it works:** When generating a new riddle, the application retrieves a few random examples from `riddles.json` and includes them in the prompt. This is also known as **few-shot prompting**.
+### **Story Mode: The Narrator**
 
+*   **The Goal:** Create an immersive, narrative-driven experience where each challenge is part of an unfolding story.
+*   **The Logic:** This mode showcases Gemini's ability to generate structured, creative content.
+    1.  **Story Generation:** If no story exists, we ask Gemini to become a storyteller. We send a detailed prompt asking for a short story, broken into chapters, and formatted as a JSON object.
+    2.  **Challenge Generation:** For each challenge, we provide Gemini with the current chapter of the story and ask it to create a translation challenge based on the chapter's content.
+*   **Data Structures:**
+    *   **Input for Story:** A detailed text prompt describing the desired story structure and format (JSON).
+    *   **Output for Story:** A JSON object containing the story's title and a list of chapters.
+    *   **Input for Challenge:** A text prompt that includes a chapter of the story as context.
 *   **Code Snippet (`main.py`):**
     ```python
-    if challenge_type == "gusakuza":
-        prompt = "Generate a Kinyarwanda riddle (igisakuzo). The response should be in the format 'riddle|answer'."
-        if IBISAKUZO_EXAMPLES:
-            # Retrieve examples from riddles.json
-            examples = random.sample(IBISAKUZO_EXAMPLES, min(len(IBISAKUZO_EXAMPLES), 3))
-            # Augment the prompt with the examples
-            example_text = "\n".join([f"Example: {ex['riddle']} | {ex['answer']}" for ex in examples])
-            prompt += f"\nHere are some examples:\n{example_text}"
+    # Story Generation Prompt
+    story_prompt = "Write a short, engaging story for a language learning game... The output should be a JSON object with a 'title' and a list of 'chapters'..."
+    
+    # Challenge Generation Prompt
+    prompt = f"Based on this chapter of a story: '{chapter_text}', create a language challenge... in the format 'English phrase|Kinyarwanda translation'."
     ```
 
-### Grounding Technique 2: Prompt Engineering
+---
 
-**Prompt engineering** is the art of crafting a good prompt. A well-crafted prompt can dramatically improve the quality of the model's response.
+### **BavugaNtiBavuga Mode: The Translator**
 
-*   **How it works:** When evaluating a user's answer, we give the model a specific persona ("You are an expert..."), provide it with context, and tell it exactly how to respond ("Respond ONLY with 'Correct' or 'Incorrect'").
-
+*   **The Goal:** Generate classic translation challenges, like translating proverbs or common phrases.
+*   **The Logic:** This is the most direct use of Gemini's translation capabilities. We provide a simple instruction and let the model do the work.
+*   **Data Structures:**
+    *   **Input:** A simple text prompt asking for a phrase and its translation, separated by a pipe (`|`).
+    *   **Output:** A single string containing the two translated phrases.
 *   **Code Snippet (`main.py`):**
     ```python
-    prompt = (
-        f"You are an expert in Kinyarwanda riddles (Ibisakuzo). The riddle's correct answer is '{target_text}'. "
-        f"The user guessed '{user_answer}'. "
-        f"Is the user's guess a correct or acceptable answer for this riddle? "
-        f"Consider common variations and synonyms. Respond ONLY with 'Correct' or 'Incorrect'."
-    )
+    prompt = f"Provide a simple {level} English phrase and its Kinyarwanda translation, separated by a pipe (|). Example: 'Good morning|Mwaramutse'."
     ```
 
-### Multimodality: Transcribing Audio
+---
 
-Gemini is a **multimodal** model, which means it can understand different types of input, including text and audio. We use this feature in dev mode to transcribe audio.
+### **Sakwe Sakwe Mode: The Cultural Expert**
 
-*   **How it works:** The application sends the audio file directly to the Gemini API and asks it to transcribe the audio into text.
-
+*   **The Goal:** Create challenges based on traditional Kinyarwanda riddles (Ibisakuzo).
+*   **The Logic:** This mode demonstrates a powerful technique called **Retrieval-Augmented Generation (RAG)**. We don't just ask Gemini to generate a riddle; we give it examples from our `riddles.json` file to ensure the riddles are authentic and culturally relevant. This is also known as **few-shot prompting**.
+*   **Data Structures:**
+    *   **Input:** A text prompt that includes several examples of real riddles and their answers.
+    *   **Output:** A new riddle and answer that mimics the style and structure of the examples.
 *   **Code Snippet (`main.py`):**
     ```python
-    @app.post("/transcribe")
-    async def transcribe_audio(audio_file: UploadFile = File(...)):
-        if DEV_MODE:
-            # Path A: Use Gemini for transcription
-            logger.info("Transcribing audio using Gemini in Dev Mode...")
-            audio_blob = {
-                'mime_type': audio_file.content_type,
-                'data': await audio_file.read()
-            }
-            response = await model.generate_content_async(["Transcribe this Kinyarwanda audio:", audio_blob])
-            return TranscribeResponse(transcript=response.text)
-        else:
-            # Path B: Use the dedicated Google Cloud Speech-to-Text API
-            # ...
+    # The prompt is augmented with examples from the riddles.json file
+    prompt = "Generate a Kinyarwanda riddle (igisakuzo)... Here are some examples:
+" + example_text
+    ```
+
+---
+
+### **Image Mode: The Artist & Interpreter**
+
+*   **The Goal:** Create challenges based on describing an image.
+*   **The Logic:** This mode uses Gemini's **multimodal** capabilities, meaning it can understand both text and images.
+    1.  We send the model an image file from our local directory.
+    2.  We also send a text prompt asking the model to describe the image in both Kinyarwanda and English.
+*   **Data Structures:**
+    *   **Input:** A list containing both a text prompt and an image file. This is a key concept in multimodality.
+    *   **Output:** A text string with the Kinyarwanda and English descriptions.
+*   **Code Snippet (`main.py`):**
+    ```python
+    prompt = [
+        "Describe this image of Rwanda in a single, descriptive sentence...",
+        img, # The PIL Image object
+    ]
+    ```
+
+---
+
+### **Multimodality in Dev Mode: The Transcriber**
+
+In the Gemini Dev Mode, we also use multimodality for audio transcription.
+
+*   **How it works:** The application sends the recorded audio file directly to the Gemini API and asks it to transcribe the audio into text.
+*   **Data Structures:**
+    *   **Input:** A list containing a text prompt ("Transcribe this Kinyarwanda audio:") and the audio data.
+*   **Code Snippet (`main.py`):**
+    ```python
+    response = await model.generate_content_async(["Transcribe this Kinyarwanda audio:", audio_blob])
     ```
 
 -----

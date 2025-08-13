@@ -147,7 +147,7 @@
             <h1 class="text-center">Bavuga Ntibavuga</h1>
             <div id="game-mode-selector" class="flex items-center">
                 <select id="game-mode-select" class="btn">
-                    <option value="" disabled selected>Change Mode</option>
+                    <option value="story" selected>Story Mode</option>
                     <option value="translation">BavugaNtiBavuga</option>
                     <option value="sakwe">Sakwe Sakwe</option>
                     <option value="image">Image</option>
@@ -183,6 +183,7 @@
                             </svg>
                         </button>
                     </div>
+                    <button id="hint-btn" class="w-full btn bg-yellow-500 hover:bg-yellow-700 hidden mt-2">Get a Hint</button>
                     <button id="soma-btn" class="w-full btn hidden">Soma</button>
                 </div>
             </div>
@@ -221,6 +222,7 @@
     const micBtn = document.getElementById('mic-btn');
     const audioPlayer = document.getElementById('audio-player');
     const gameModeSelector = document.getElementById('game-mode-select');
+    const hintBtn = document.getElementById('hint-btn');
 
     let mediaRecorder;
     let audioChunks = [];
@@ -246,6 +248,7 @@
     newChallengeBtn.addEventListener('click', getNewChallenge);
     somaBtn.addEventListener('click', handleSoma);
     micBtn.addEventListener('click', toggleRecording);
+    hintBtn.addEventListener('click', getHint);
 
     async function handleSoma() {
         if (gusakuzaState !== 'intro') return;
@@ -258,6 +261,7 @@
             somaBtn.classList.add('hidden');
             answerInput.classList.remove('hidden');
             submitBtn.parentElement.classList.remove('hidden');
+            hintBtn.classList.remove('hidden');
         } catch (error) {
             instructionElement.textContent = 'Failed to get riddle. Try again.';
             console.error("Error during 'soma':", error);
@@ -274,6 +278,7 @@
         submitBtn.disabled = true;
         somaBtn.disabled = true;
         if (audioFeaturesEnabled) micBtn.disabled = true;
+        hintBtn.disabled = true;
         
         try {
             const response = await fetch(url, options);
@@ -290,6 +295,7 @@
             submitBtn.disabled = false;
             somaBtn.disabled = false;
             if (audioFeaturesEnabled) micBtn.disabled = false;
+            hintBtn.disabled = false;
         }
     }
 
@@ -300,6 +306,7 @@
         feedbackMessage.textContent = '';
         correctAnswerFeedback.textContent = '';
         gusakuzaState = 'done';
+        hintBtn.classList.add('hidden');
 
         try {
             const data = await fetchApi(`/get_challenge?difficulty=1&game_mode=${currentGameMode}`);
@@ -317,6 +324,9 @@
                 answerInput.classList.remove('hidden');
                 submitBtn.parentElement.classList.remove('hidden');
                 somaBtn.classList.add('hidden');
+                if (data.challenge_type === 'gusakuza') {
+                    hintBtn.classList.remove('hidden');
+                }
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
                     instructionElement.textContent = 'What do you think this image means? Describe it in Kinyarwanda or English:';
@@ -331,6 +341,20 @@
         } catch (error) {
             instructionElement.textContent = `Failed to load challenge: ${error.message}`;
             console.error("Error fetching new challenge:", error);
+        }
+    }
+
+    async function getHint() {
+        if (!currentChallengeId) return;
+
+        try {
+            const data = await fetchApi(`/get_hint?challenge_id=${currentChallengeId}`);
+            feedbackMessage.textContent = `Hint: ${data.hint}`;
+            correctAnswerFeedback.textContent = '';
+            hintBtn.disabled = true; // Disable after use
+        } catch (error) {
+            feedbackMessage.textContent = `Error: ${error.message}`;
+            console.error("Error fetching hint:", error);
         }
     }
 
