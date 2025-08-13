@@ -705,6 +705,287 @@
             "_id": {
                 "$oid": "689c8b18db8909013ec8a659"
             }
+        },
+        {
+            "source_text": "Igisabo kirangira kigatangira",
+            "target_text": "A journey of a thousand miles begins with a single step",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c908a962876f2ff1e2fe8"
+            }
+        },
+        {
+            "source_text": "Umuti utabona umuti wabwo uba urwaye",
+            "target_text": "A disease that doesn't find its cure remains a disease.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c90f3962876f2ff1e2fea"
+            }
+        },
+        {
+            "source_text": "Hello",
+            "target_text": "Muraho",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9118962876f2ff1e2fec"
+            }
+        },
+        {
+            "source_text": "Igisabo kiba kigira umusumari",
+            "target_text": "A pot always has a matching lid.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9120962876f2ff1e2fee"
+            }
+        },
+        {
+            "source_text": "Hello",
+            "target_text": "Muraho",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c912d962876f2ff1e2ff0"
+            }
+        },
+        {
+            "source_text": "Kajugujugu ka Kamatankoni mu kugukubita yarakuneshaga",
+            "target_text": "Uruyuki.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9135962876f2ff1e2ff1"
+            }
+        },
+        {
+            "source_text": "Kwa Bukoco barakocagurana",
+            "target_text": "Urusyo n'ingasire.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9151962876f2ff1e2ff3"
+            }
+        },
+        {
+            "source_text": "Hello",
+            "target_text": "Muraho",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c95d1962876f2ff1e2ff4"
+            }
+        },
+        {
+            "source_text": "Umuti uvura indwara, ariko ubwenge buvuza uburwayi bw'umutima",
+            "target_text": "Medicine cures illness, but wisdom cures heartache.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c95d7962876f2ff1e2ff5"
+            }
+        },
+        {
+            "source_text": "I bought a delicious plate of plantains",
+            "target_text": "Naguze isahane ry'amatoki meza",
+            "context": "Chapter 1: Chapter 1: Arrival in Kigali\n\nI arrived in Kigali, the capital of Rwanda, feeling excited!  The city buzzed with activity.  I saw many *amagare* (motorcycles) weaving through the traffic.  I was amazed by the vibrant colours of the *imigongo* (cow dung paintings) displayed in the market.  The friendly faces and warm greetings made me feel immediately welcome. I bought a delicious plate of *matoke* (plantains) from a street vendor. It was the perfect start to my Rwandan adventure!",
+            "challenge_type": "story_translation",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9ac44e21ff8009474afb"
+            }
+        },
+        {
+            "source_text": "peaceful interactions",
+            "target_text": "imikorere y\u2019amahoro",
+            "context": "Chapter 2: Chapter 2: Hiking in Volcanoes National Park\n\nMy next stop was Volcanoes National Park, home to the magnificent mountain gorillas.  I embarked on a challenging *inzira* (journey) through lush, green forests.  The air was cool and crisp, filled with the sounds of birdsong. I learned about the importance of *uburinganire* (harmony) in Rwandan culture, which I saw reflected in the peaceful interactions between the park rangers and the tourists.  Reaching the summit and seeing the breathtaking views was incredibly rewarding.  It was truly a magical experience.",
+            "challenge_type": "story_translation",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9d334e21ff8009474afd"
+            }
+        },
+        {
+            "source_text": "The serene beauty of the lake took my breath away",
+            "target_text": "Ubwiza bwiza bw'ikiyaga bwatumye ntangara",
+            "context": "Chapter 3: Chapter 3:  Lake Kivu Relaxation\n\nFinally, I made my way to Lake Kivu.  The serene beauty of the lake took my breath away.  I spent my days swimming in the crystal-clear waters and enjoying the gentle *umuyaga* (breeze).  I took a boat trip to one of the islands on the lake, where I relaxed and took in the magnificent *ibishusho* (scenery).  I watched the sun set over the lake and reflected on my incredible journey through Rwanda. The people, the culture, and the breathtaking landscape left a lasting impression.  It was a trip I\u2019ll never forget!",
+            "challenge_type": "story_translation",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9d844e21ff8009474aff"
+            }
+        },
+        {
+            "source_text": "I was already falling in love with Rwanda",
+            "target_text": "Nakundaga u Rwanda",
+            "context": "Chapter 1: Chapter 1: Arrival in Kigali\n\nI arrived in Kigali, the capital of Rwanda, feeling excited and a little nervous.  The city buzzed with activity \u2013  people hurried past, selling *imbuto* (fruits) and *amata* (milk) from colorful baskets.  The air was warm and filled with the scent of *kawa* (coffee). I checked into my hotel, a beautiful building with stunning views of the rolling hills. I decided to start my adventure by visiting the bustling Kimironko Market, a vibrant place filled with local crafts and delicious street food.  I was amazed by the *ubwiza* (beauty) of the handwoven baskets and the intricate designs on the clothing. The market was full of *abantu* (people), all chatting and laughing.  I bought some *igikoma* (bananas) and a small woven basket as a souvenir. I was already falling in love with Rwanda!",
+            "challenge_type": "story_translation",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9d994e21ff8009474b01"
+            }
+        },
+        {
+            "source_text": "Igira inyuma y'inzu uce inkoni y'umuze n'umunzenzi",
+            "target_text": "Urusogo n'urusogi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9db24e21ff8009474b02"
+            }
+        },
+        {
+            "source_text": "Nsimbutse umugande nnya ibuye",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9dd84e21ff8009474b04"
+            }
+        },
+        {
+            "source_text": "Kwa Bukoco barakocagurana",
+            "target_text": "Urusyo n'ingasire.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9df34e21ff8009474b06"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw3.jpeg",
+            "target_text": "Kinyarwanda: Umujyi wa Kigali ugaragaza ubwinshi bw'inyubako n'imiterere y'ubutaka bwa Rwanda | English: Kigali's skyline showcases a blend of modern buildings and Rwanda's hilly landscape.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9e264e21ff8009474b08"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw2.jpeg",
+            "target_text": "Kinyarwanda: Ikirunga gifite igicu hejuru cyacyo, kireba ku kiyaga n'ibirunga biri kure | English: A volcano capped with a cloud overlooks a lake and distant hills.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9e334e21ff8009474b09"
+            }
+        },
+        {
+            "source_text": "The view of the mountains across the water",
+            "target_text": "Isuku ry'imisozi hakurya y'amazi",
+            "context": "Chapter 2: Chapter 2:  A Hike to Lake Kivu\n\nThe next day, I embarked on a hike to the stunning Lake Kivu.  The journey was challenging, but the *ubwiza* (beauty) of the landscape was breathtaking.  I passed fields of lush *ibishyimbo* (beans) and *imyumbati* (cassava), and saw children playing along the way.  They greeted me with a cheerful *Muraho* (hello)!  The *ikirere* (air) was fresh and clean.  Finally, I reached the lake, its waters sparkling under the bright sun.  I spent the afternoon swimming and relaxing on the shore, enjoying the peace and tranquility.  The view of the *imisozi* (mountains) across the water was truly unforgettable.  In the evening, I enjoyed a delicious meal of *isombe* (a type of mashed vegetable dish) and *inyama* (meat) at a local restaurant.",
+            "challenge_type": "story_translation",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c9e4d4e21ff8009474b0a"
+            }
+        },
+        {
+            "source_text": "Umuti ukomoka kure urusha uwo mu rugo",
+            "target_text": "A remedy from afar is better than one from home.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca2424e21ff8009474b0b"
+            }
+        },
+        {
+            "source_text": "Umuti w'ubukene ni ugukora",
+            "target_text": "The cure for poverty is work.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca25f4e21ff8009474b0d"
+            }
+        },
+        {
+            "source_text": "Ubugeni bw'ino burampuha",
+            "target_text": "Wabaza ubuhiri mu muhini !",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca29a4e21ff8009474b0e"
+            }
+        },
+        {
+            "source_text": "Ngira umwana akabyara umugenda",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca2a34e21ff8009474b10"
+            }
+        },
+        {
+            "source_text": "Ndica simporwe",
+            "target_text": "Uruzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca2c94e21ff8009474b12"
+            }
+        },
+        {
+            "source_text": "Turatemba shyashyari",
+            "target_text": "Utuzi ku rutare.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca2e84e21ff8009474b14"
+            }
+        },
+        {
+            "source_text": "Kwa Bukoco barakocagurana",
+            "target_text": "Urusyo n'ingasire.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca3144e21ff8009474b16"
+            }
+        },
+        {
+            "source_text": "Gacika gasubiraho",
+            "target_text": "Urwara.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca3264e21ff8009474b18"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw1.jpg",
+            "target_text": "Kinyarwanda: Imirima myiza ya volkano yo mu Rwanda igaragara munsi y'ikibaya gifite igicu kinini | English: Volcanic mountains of Rwanda rise majestically under a vast, cloudy sky.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca35e4e21ff8009474b1a"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw3.jpeg",
+            "target_text": "Kinyarwanda: Umujyi wa Kigali ugaragaza ubwinshi bw'inyubako n'ubwiza bw'imisozi | English: Kigali's skyline showcases a blend of modern buildings and the beauty of rolling hills.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689ca36c4e21ff8009474b1c"
+            }
         }
     ],
     "submissions": [
@@ -1007,6 +1288,196 @@
                 "$oid": "689c81c2f00ce5a6ac4aee95"
             },
             "submitted_at": "2025-08-13T12:14:58.798809"
+        },
+        {
+            "challenge_id": "689c908a962876f2ff1e2fe8",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c90ef962876f2ff1e2fe9"
+            },
+            "submitted_at": "2025-08-13T13:19:43.549245"
+        },
+        {
+            "challenge_id": "689c90f3962876f2ff1e2fea",
+            "user_answer": "solution that has no solution is a problem its self",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c9114962876f2ff1e2feb"
+            },
+            "submitted_at": "2025-08-13T13:20:20.462781"
+        },
+        {
+            "challenge_id": "689c9118962876f2ff1e2fec",
+            "user_answer": "Uraho",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c911c962876f2ff1e2fed"
+            },
+            "submitted_at": "2025-08-13T13:20:28.806351"
+        },
+        {
+            "challenge_id": "689c9120962876f2ff1e2fee",
+            "user_answer": "Imbwa",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c9129962876f2ff1e2fef"
+            },
+            "submitted_at": "2025-08-13T13:20:41.827341"
+        },
+        {
+            "challenge_id": "689c9135962876f2ff1e2ff1",
+            "user_answer": "Gitore",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c914b962876f2ff1e2ff2"
+            },
+            "submitted_at": "2025-08-13T13:21:15.885686"
+        },
+        {
+            "challenge_id": "689c9ac44e21ff8009474afb",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c9d304e21ff8009474afc"
+            },
+            "submitted_at": "2025-08-13T14:12:00.046959"
+        },
+        {
+            "challenge_id": "689c9d334e21ff8009474afd",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c9d804e21ff8009474afe"
+            },
+            "submitted_at": "2025-08-13T14:13:20.298038"
+        },
+        {
+            "challenge_id": "689c9d844e21ff8009474aff",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c9d914e21ff8009474b00"
+            },
+            "submitted_at": "2025-08-13T14:13:37.279284"
+        },
+        {
+            "challenge_id": "689c9db24e21ff8009474b02",
+            "user_answer": "Uruyuki",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c9dca4e21ff8009474b03"
+            },
+            "submitted_at": "2025-08-13T14:14:34.133740"
+        },
+        {
+            "challenge_id": "689c9dd84e21ff8009474b04",
+            "user_answer": "uruyuki",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c9dec4e21ff8009474b05"
+            },
+            "submitted_at": "2025-08-13T14:15:08.428330"
+        },
+        {
+            "challenge_id": "689c9df34e21ff8009474b06",
+            "user_answer": "uruyuki",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c9e0e4e21ff8009474b07"
+            },
+            "submitted_at": "2025-08-13T14:15:42.849909"
+        },
+        {
+            "challenge_id": "689ca2424e21ff8009474b0b",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689ca25b4e21ff8009474b0c"
+            },
+            "submitted_at": "2025-08-13T14:34:03.762386"
+        },
+        {
+            "challenge_id": "689ca29a4e21ff8009474b0e",
+            "user_answer": "pass",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca29e4e21ff8009474b0f"
+            },
+            "submitted_at": "2025-08-13T14:35:10.809592"
+        },
+        {
+            "challenge_id": "689ca2a34e21ff8009474b10",
+            "user_answer": "umuvure",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca2c34e21ff8009474b11"
+            },
+            "submitted_at": "2025-08-13T14:35:47.930726"
+        },
+        {
+            "challenge_id": "689ca2c94e21ff8009474b12",
+            "user_answer": "Umugezi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca2df4e21ff8009474b13"
+            },
+            "submitted_at": "2025-08-13T14:36:15.727968"
+        },
+        {
+            "challenge_id": "689ca2e84e21ff8009474b14",
+            "user_answer": "Umugezi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca3074e21ff8009474b15"
+            },
+            "submitted_at": "2025-08-13T14:36:55.267284"
+        },
+        {
+            "challenge_id": "689ca3144e21ff8009474b16",
+            "user_answer": "uruyuzi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca3204e21ff8009474b17"
+            },
+            "submitted_at": "2025-08-13T14:37:20.661734"
+        },
+        {
+            "challenge_id": "689ca3264e21ff8009474b18",
+            "user_answer": "icyunzwe",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689ca33f4e21ff8009474b19"
+            },
+            "submitted_at": "2025-08-13T14:37:51.153908"
+        },
+        {
+            "challenge_id": "689ca35e4e21ff8009474b1a",
+            "user_answer": "The path to a lasting peace",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689ca3674e21ff8009474b1b"
+            },
+            "submitted_at": "2025-08-13T14:38:31.290503"
         }
     ],
     "game_state": [
@@ -1016,11 +1487,13 @@
             },
             "state_name": "global",
             "lives": 3,
-            "score": 0,
+            "score": 10,
             "incorrect_answers": [],
-            "pending_riddle": "Igira inyuma y'inzu uce inkoni y'umuze n'umunzenzi|Urusogo n'urusogi.",
-            "game_mode": "translation",
-            "thematic_words": []
+            "pending_riddle": "Kwa Bukoco barakocagurana|Urusyo n'ingasire.",
+            "game_mode": "image",
+            "thematic_words": [],
+            "story": "{\"title\": \"Exploring Rwanda\", \"chapters\": [\"Chapter 1: Arrival in Kigali\\n\\nI arrived in Kigali, the capital of Rwanda, feeling excited and a little nervous.  The city buzzed with activity \\u2013  people hurried past, selling *imbuto* (fruits) and *amata* (milk) from colorful baskets.  The air was warm and filled with the scent of *kawa* (coffee). I checked into my hotel, a beautiful building with stunning views of the rolling hills. I decided to start my adventure by visiting the bustling Kimironko Market, a vibrant place filled with local crafts and delicious street food.  I was amazed by the *ubwiza* (beauty) of the handwoven baskets and the intricate designs on the clothing. The market was full of *abantu* (people), all chatting and laughing.  I bought some *igikoma* (bananas) and a small woven basket as a souvenir. I was already falling in love with Rwanda!\", \"Chapter 2:  A Hike to Lake Kivu\\n\\nThe next day, I embarked on a hike to the stunning Lake Kivu.  The journey was challenging, but the *ubwiza* (beauty) of the landscape was breathtaking.  I passed fields of lush *ibishyimbo* (beans) and *imyumbati* (cassava), and saw children playing along the way.  They greeted me with a cheerful *Muraho* (hello)!  The *ikirere* (air) was fresh and clean.  Finally, I reached the lake, its waters sparkling under the bright sun.  I spent the afternoon swimming and relaxing on the shore, enjoying the peace and tranquility.  The view of the *imisozi* (mountains) across the water was truly unforgettable.  In the evening, I enjoyed a delicious meal of *isombe* (a type of mashed vegetable dish) and *inyama* (meat) at a local restaurant.\", \"Chapter 3:  Gorilla Trekking and Farewell\\n\\nMy final adventure was gorilla trekking in Volcanoes National Park.  It was an incredible experience, walking through the dense rainforest to encounter these majestic creatures.  Our guide, a friendly *umuntu* (person) named Jean-Paul, led us carefully through the *ishyamba* (forest).  We finally found a family of gorillas, peacefully feeding and resting. Watching them was an unforgettable and humbling experience.  The power and gentleness of these animals was awe-inspiring.  As I prepared to leave Rwanda, I felt a sense of *umunezero* (joy) and gratitude for the incredible experiences I had. I will never forget the *ubuntu* (human kindness) of the Rwandan people and the breathtaking *ubwiza* (beauty) of the country.  Ndi mubwenge (I am clever) to have visited this stunning place.\"]}",
+            "story_chapter": 2
         }
     ]
 }

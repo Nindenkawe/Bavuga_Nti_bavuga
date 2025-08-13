@@ -54,7 +54,10 @@ def _init_dev_db():
                     "score": 0,
                     "incorrect_answers": [],
                     "pending_riddle": None,
-                    "game_mode": "translation"
+                    "game_mode": "story",
+                    "thematic_words": [],
+                    "story": None,
+                    "story_chapter": 0
                 }]
             }, f, indent=4)
         logger.info(f"Initialized development database at {DEV_DB_FILE}")
@@ -134,8 +137,10 @@ class GameState(BaseModel):
     score: int = 0
     incorrect_answers: list[str] = []
     pending_riddle: Optional[str] = None
-    game_mode: str = "translation"
+    game_mode: str = "story"
     thematic_words: list[str] = []
+    story: Optional[str] = None
+    story_chapter: int = 0
 
     class Config:
         arbitrary_types_allowed = True

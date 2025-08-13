@@ -197,9 +197,31 @@ async def generate_challenge(
         )
         challenge_type = ""
         prompt = ""
+        context = None
+
+        # --- Story Mode ---
+        if game_mode == "story":
+            if not state.story or state.story_chapter >= len(json.loads(state.story).get("chapters", [])):
+                story_prompt = "Write a short, engaging story for a language learning game. The story should be about a character exploring Rwanda. The story should be broken down into 3 chapters. Each chapter should introduce new vocabulary. The story should be in English. The output should be a JSON object with a 'title' and a list of 'chapters', where each chapter is a string. Do not add any other text, titles, or formatting."
+                logger.info(f"--- GEMINI API STORY GENERATION REQUEST ---\nPROMPT: {story_prompt}\n")
+                response = await model.generate_content_async(story_prompt)
+                logger.info(f"--- GEMINI API STORY GENERATION RESPONSE ---\nRESPONSE: {response.text}\n")
+                
+                cleaned_response = response.text.strip().replace("```json", "").replace("```", "")
+                story_data = json.loads(cleaned_response)
+                state.story = json.dumps(story_data)
+                state.story_chapter = 0
+            
+            story_data = json.loads(state.story)
+            chapter_text = story_data["chapters"][state.story_chapter]
+            challenge_type = "story_translation"
+            prompt = f"Based on this chapter of a story: '{chapter_text}', create a language challenge. The challenge should be a phrase from the story to translate from English to Kinyarwanda. The output should be in the format 'English phrase|Kinyarwanda translation'. Do not add any other text, titles, or formatting."
+            
+            context = f"Chapter {state.story_chapter + 1}: {chapter_text}"
+            state.story_chapter += 1
 
         # --- Thematic Linking ---
-        if state.thematic_words:
+        elif state.thematic_words:
             word = state.thematic_words.pop(0)
             challenge_type = "themed_translation"
             prompt = f"Provide a simple English phrase using the word '{word}' and its Kinyarwanda translation, separated by a pipe (|). Example: 'The honey is sweet|Uburyo ni buryoshye'. Do not add any other text, titles, or formatting."
@@ -298,12 +320,13 @@ async def generate_challenge(
                 "challenge_type": challenge_type,
                 "source_text": parts[0].strip(),
                 "target_text": parts[1].strip(),
-                "context": None, # Context is not needed for this simple format
+                "context": context, # Context is not needed for this simple format
             }
 
     except Exception as e:
         logger.error(f"Error generating challenge with agent: {e}")
         return await generate_challenge_dev(difficulty, state, game_mode)
+
 
 
 async def evaluate_answer(
@@ -326,9 +349,11 @@ async def evaluate_answer(
         
         logger.info(f"--- GEMINI API REQUEST ---\nPROMPT: {prompt}\n")
         response = await model.generate_content_async(prompt)
-        logger.info(f"--- GEMINI API RESPONSE ---\nRESPONSE: {response.text}\n")
+        logger.info(f"--- GEMINI API RESPONSE ---
+RESPONSE: {response.text}\n")
 
-        return "correct" in response.text.lower()
+        # Stricter check for the word 'correct'
+        return response.text.strip().lower() == 'correct'
     except Exception as e:
         logger.error(f"Error evaluating answer with agent: {e}")
         return await evaluate_answer_dev(user_answer, target_text, challenge_type)
@@ -439,10 +464,42 @@ async def soma_endpoint():
     )
 
 
+class HintResponse(BaseModel):
+    hint: str
+
+
+@app.get("/get_hint", response_model=HintResponse)
+async def get_hint_endpoint(challenge_id: str):
+    challenge = await get_challenge(challenge_id)
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found.")
+
+    if challenge.challenge_type != "gusakuza":
+        raise HTTPException(status_code=400, detail="Hints are only available for riddles.")
+
+    if not model:
+        raise HTTPException(status_code=503, detail="Core AI service is not available.")
+
+    prompt = (
+        f"The user is trying to solve the riddle: '{challenge.source_text}'. The answer is '{challenge.target_text}'. "
+        f"Provide a clever, one-sentence hint that doesn't give away the answer."
+    )
+
+    logger.info(f"--- GEMINI API HINT REQUEST ---\nPROMPT: {prompt}\n")
+    try:
+        response = await model.generate_content_async(prompt)
+        logger.info(f"--- GEMINI API HINT RESPONSE ---\nRESPONSE: {response.text}\n")
+        return HintResponse(hint=response.text.strip())
+    except Exception as e:
+        logger.error(f"Error generating hint with agent: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate hint.")
+
+
 @app.post("/submit_answer", response_model=SubmissionResponse)
 async def submit_answer_endpoint(
     challenge_id: str = Form(...), user_answer: str = Form(...)
 ):
+
     challenge = await get_challenge(challenge_id)
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found.")
