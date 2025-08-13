@@ -5,7 +5,7 @@ set -e
 
 # --- Configuration ---
 # The Project ID for your Google Cloud project.
-PROJECT_ID="$1"
+PROJECT_ID="bavuga-ntibavuga-468809"
 # The name for your new service account.
 SERVICE_ACCOUNT_NAME="bavuga-app-service-account"
 # The name of the key file to be created.
@@ -27,7 +27,12 @@ echo "--- Google Cloud Setup for Bavuga App ---"
 echo
 
 # --- Prerequisite Check ---
-echo "STEP 0: Checking for gcloud authentication..."
+echo "STEP 0: Checking for prerequisites..."
+if ! command -v gcloud &> /dev/null; then
+    echo "Error: 'gcloud' command not found. Please install the Google Cloud SDK."
+    exit 1
+fi
+
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
     echo "You are not logged into gcloud. Please run 'gcloud auth login' and 'gcloud auth application-default login' first."
     exit 1

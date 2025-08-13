@@ -110,12 +110,53 @@
             font-size: 1.1rem;
             color: #dcdcdc;
         }
+        .status-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .status-enabled {
+            background-color: var(--success-color);
+            color: var(--background-color);
+        }
+        .status-disabled {
+            background-color: var(--error-color);
+            color: var(--text-color);
+        }
+        #game-mode-select {
+            background-color: var(--secondary-color);
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 3px solid var(--border-color);
+        }
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen p-4">
 
     <div id="container" class="flex flex-col">
-        <h1 class="text-center mb-6">Bavuga Ntibavuga</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-center">Bavuga Ntibavuga</h1>
+            <div id="game-mode-selector" class="flex items-center">
+                <select id="game-mode-select" class="btn">
+                    <option value="" disabled selected>Change Mode</option>
+                    <option value="translation">Translation</option>
+                    <option value="riddles">Riddles</option>
+                    <option value="image">Image</option>
+                </select>
+            </div>
+        </div>
+
+        {% if dev_mode %}
+        <div class="status-indicator status-disabled">DEV MODE</div>
+        {% elif audio_features_enabled %}
+        <div class="status-indicator status-enabled">Audio Features Enabled</div>
+        {% else %}
+        <div class="status-indicator status-disabled">Audio Features Disabled (Billing Required)</div>
+        {% endif %}
 
         <div id="game-screen">
             <div class="flex justify-between items-center mb-6">
@@ -155,13 +196,12 @@
 
     <script>
 (function() {
-    console.log("Script executed at: " + new Date().toLocaleTimeString());
-
+    const audioFeaturesEnabled = {{ audio_features_enabled | tojson }};
     let currentChallengeId = null;
     let lives = {{ lives | int(3) }};
     let score = {{ score | int(0) }};
-    let gusakuzaState = 'done'; // 'intro', 'riddle', 'done'
-    let currentRiddle = '';
+    let gusakuzaState = 'done';
+    let currentGameMode = '{{ game_mode }}';
 
     const answerInput = document.getElementById('answer-input');
     const submitBtn = document.getElementById('submit-btn');
@@ -172,19 +212,28 @@
     const correctAnswerFeedback = document.getElementById('correct-answer-feedback');
     const sourceTextElement = document.getElementById('source-text');
     const contextTextElement = document.getElementById('context-text');
-
-    // Add a new button for "Soma"
     const somaBtn = document.getElementById('soma-btn');
     const micBtn = document.getElementById('mic-btn');
     const audioPlayer = document.getElementById('audio-player');
+    const gameModeSelector = document.getElementById('game-mode-select');
 
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
 
-
     document.addEventListener('DOMContentLoaded', () => {
         updateScoreboard();
+        gameModeSelector.value = currentGameMode;
+        getNewChallenge();
+        if (!audioFeaturesEnabled) {
+            micBtn.disabled = true;
+            micBtn.style.cursor = 'not-allowed';
+            micBtn.style.opacity = '0.5';
+        }
+    });
+
+    gameModeSelector.addEventListener('change', () => {
+        currentGameMode = gameModeSelector.value;
         getNewChallenge();
     });
 
@@ -195,7 +244,6 @@
 
     async function handleSoma() {
         if (gusakuzaState !== 'intro') return;
-        
         try {
             const data = await fetchApi('/soma', { method: 'POST' });
             gusakuzaState = 'riddle';
@@ -220,24 +268,24 @@
         newChallengeBtn.disabled = true;
         submitBtn.disabled = true;
         somaBtn.disabled = true;
-        micBtn.disabled = true;
+        if (audioFeaturesEnabled) micBtn.disabled = true;
         
-        const response = await fetch(url, options);
-        
-        newChallengeBtn.disabled = false;
-        submitBtn.disabled = false;
-        somaBtn.disabled = false;
-        micBtn.disabled = false;
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
-            throw new Error(errorData.detail);
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: `HTTP Error: ${response.status}` }));
+                throw new Error(errorData.detail);
+            }
+            if (response.headers.get('Content-Type')?.includes('audio/')) {
+                return await response.blob();
+            }
+            return await response.json();
+        } finally {
+            newChallengeBtn.disabled = false;
+            submitBtn.disabled = false;
+            somaBtn.disabled = false;
+            if (audioFeaturesEnabled) micBtn.disabled = false;
         }
-        // For audio, we want the blob, not json
-        if (response.headers.get('Content-Type')?.includes('audio/')) {
-            return await response.blob();
-        }
-        return await response.json();
     }
 
     async function getNewChallenge() {
@@ -249,7 +297,7 @@
         gusakuzaState = 'done';
 
         try {
-            const data = await fetchApi('/get_challenge?difficulty=1');
+            const data = await fetchApi(`/get_challenge?difficulty=1&game_mode=${currentGameMode}`);
             currentChallengeId = data.challenge_id;
             
             if (data.challenge_type === 'gusakuza_init') {
@@ -276,7 +324,7 @@
 
             challengeContent.classList.remove('hidden');
         } catch (error) {
-            instructionElement.textContent = 'Failed to load challenge. Try again.';
+            instructionElement.textContent = `Failed to load challenge: ${error.message}`;
             console.error("Error fetching new challenge:", error);
         }
     }
@@ -299,13 +347,14 @@
             feedbackMessage.textContent = data.message;
             correctAnswerFeedback.textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
             
-            // Synthesize and play the response
-            const textToSpeak = data.is_correct ? data.message : `${data.message}. The correct answer was: ${data.correct_answer}`;
-            await synthesizeAndPlay(textToSpeak);
+            if (audioFeaturesEnabled) {
+                const textToSpeak = data.is_correct ? data.message : `${data.message}. The correct answer was: ${data.correct_answer}`;
+                await synthesizeAndPlay(textToSpeak);
+            }
 
             if (lives <= 0) {
                 alert('Game Over!');
-                await synthesizeAndPlay("Game Over!");
+                if(audioFeaturesEnabled) await synthesizeAndPlay("Game Over!");
                 lives = 3;
                 score = 0;
                 updateScoreboard();
@@ -319,12 +368,12 @@
     }
 
     async function toggleRecording() {
+        if (!audioFeaturesEnabled) return;
         if (isRecording) {
             mediaRecorder.stop();
             isRecording = false;
             micBtn.classList.remove('bg-green-500');
             micBtn.classList.add('bg-red-500');
-            micBtn.disabled = true; // Disable until processing is done
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -338,7 +387,6 @@
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
                     audioChunks = [];
                     await transcribeAndFill(audioBlob);
-                    micBtn.disabled = false;
                 };
 
                 mediaRecorder.start();
@@ -364,11 +412,12 @@
             instructionElement.textContent = 'Transcription complete.';
         } catch (error) {
             console.error("Error during transcription:", error);
-            instructionElement.textContent = 'Transcription failed.';
+            instructionElement.textContent = `Transcription failed: ${error.message}`;
         }
     }
 
     async function synthesizeAndPlay(text) {
+        if (!audioFeaturesEnabled) return;
         try {
             const formData = new FormData();
             formData.append('text', text);

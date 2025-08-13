@@ -1,196 +1,185 @@
-# Building a Local-First Generative AI App
+# Welcome to the Bavuga Ntibavuga Developer's Guide
 
-Welcome everyone! Today, we're going to build and run a fun, educational Kinyarwanda language game called "Bavuga Ntibavuga," powered by Google's Generative AI. We'll focus on a local-first development workflow, using Docker Compose to run our entire application stack with a single command.
+Hello, fellow developer! Welcome to the official guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. If you're excited about building smart, interactive applications that feel alive, you're in the right place.
 
-This guide will walk you through the key features, the technology behind them, and how to get everything running on your local machine.
+This guide is your all-access pass. We'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
 
------
+### Choose Your Adventure
 
-## 1. The Core Idea
+You have two paths for running this application. Choose the one that fits your goal:
 
-"Bavuga Ntibavuga" is a language learning game that leverages generative AI to create dynamic challenges. Instead of static questions, our app uses the Gemini API to generate riddles ("Gusakuza"), proverbs, and translation tasks in real-time. It also features live audio interaction, allowing users to speak their answers and hear the AI's responses.
+1.  **Path A: The Gemini Dev Mode**
+    *   **Goal:** Quickly test the UI, game logic, and even live audio transcription.
+    *   **Requirements:** Only a `GEMINI_API_KEY`.
+    *   **Features:** Uses the powerful multimodal Gemini API for game logic and speech-to-text, with a simple JSON file for a database. No Docker, no billing required.
 
------
+2.  **Path B: The Full Production Experience**
+    *   **Goal:** Deploy the complete, production-ready application.
+    *   **Requirements:** Docker, a billing-enabled Google Cloud project, and API keys.
+    *   **Features:** Uses dedicated, high-performance Google Cloud APIs for audio and a robust MongoDB database, all managed by Docker.
 
-## 2. Our Tech Stack
-
-*   **Backend:** FastAPI (Python)
-*   **Database:** MongoDB
-*   **AI Models:**
-    *   **Core Logic:** Google Gemini API via the `google-generativeai` library.
-    *   **Speech-to-Text:** Google Cloud Speech-to-Text API via `google-cloud-speech`.
-    *   **Text-to-Speech:** Google Cloud Text-to-Speech API via `google-cloud-texttospeech`.
-*   **Containerization:** Docker Compose
-*   **Frontend:** Vanilla HTML, TailwindCSS, and JavaScript.
+Ready? Let's begin!
 
 -----
 
-## 3. Getting Started: Authentication is Key
+## 1. The First Step: Configuring Your Environment
 
-Our application interacts with multiple Google Cloud services, which require proper authentication.
+No matter which path you choose, you need to set up your secret keys. The application loads these from a `.env` file.
 
-*   **Gemini API:** Uses an API Key.
-*   **Speech & Text-to-Speech APIs:** Use Application Default Credentials (ADC) via a service account JSON file.
+**Action:** Create a file named `.env` in the project root. Paste the following and add your Gemini API key.
 
-To simplify this setup, we've created a script to automate the process.
+```dotenv
+# .env file
 
-### Automated Setup
+# Required for all AI features. Get this from Google AI Studio.
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
 
-Before running the application, execute the setup script from your terminal. You will need to provide your Google Cloud Project ID as an argument.
+# --- The variables below are only needed for the Production path ---
 
-```bash
-# Make the script executable
-chmod +x setup_gcloud.sh
+# Tells the app where to find the MongoDB database inside Docker.
+MONGODB_URI="mongodb://database:27017"
 
-# Run the script with your Project ID
-./setup_gcloud.sh YOUR_PROJECT_ID
+# The name of the database to use.
+DATABASE_NAME="language_app"
 ```
 
-This script will enable the necessary APIs, create a service account with the correct permissions, and generate a `google-credentials.json` file in your project directory. This file is automatically ignored by Git to keep your credentials secure.
+-----
+
+## 2. Path A: The Gemini-Powered Dev Mode
+
+This is your playground for rapid development. You'll be amazed at what you can do with just a Gemini API key.
+
+### Your Mission:
+
+1.  **Install Dependencies:**
+    Open your terminal and run:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Launch the App:**
+    Our `run.sh` script makes this easy. The `--dev` flag activates this special mode.
+    ```bash
+    # Make the script executable (you only need to do this once)
+    chmod +x run.sh
+
+    # Engage Gemini Dev Mode!
+    ./run.sh --dev
+    ```
+
+Your local server is now running at `http://localhost:2500`. You can now use the microphone in the app to speak your answers!
+
+**How it Works:** In this mode, the app sends your recorded audio directly to the Gemini API for transcription. It's a live demonstration of multimodal AI in action!
+
+**Note:** The Text-to-Speech feature is disabled in this mode because the Gemini API generates text, not audio. The app will function perfectly, but you won't hear the answers spoken back.
 
 -----
 
-## 4. Dissecting the Code: The AI-Powered Backend
+## 3. Path B: The Full Production Experience with Docker
 
-Let's dive into the most important parts of our `main.py` file.
+This path gives you a full, production-grade deployment using dedicated, high-performance Google Cloud services.
 
-### a) The AI Model
+### Your Mission:
 
-Instead of a high-level agent library, we interact directly with the `google-generativeai` library for more control. We initialize a model that will be used for generating challenges and evaluating answers.
+1.  **Prerequisites:**
+    *   You must have **Docker** and **Docker Compose** installed.
+    *   You need a **Google Cloud project with billing enabled** to use the dedicated audio APIs.
 
-**`main.py` Snippet:**
-```python
-# --- Generative AI Configuration ---
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY environment variable is required.")
-genai.configure(api_key=api_key)
+2.  **Automated Cloud Setup:**
+    We've created a script to handle the tedious parts of cloud setup.
+    ```bash
+    # Make it executable
+    chmod +x setup_gcloud.sh
 
-# --- AI Model Configuration ---
-model = genai.GenerativeModel(GEMMA_MODEL_NAME)
-```
-**Explanation:** We first configure our API key and then instantiate the `GenerativeModel`. This `model` object is our primary interface to the Gemini API for all text-based generation tasks.
+    # Run it with your Google Cloud Project ID
+    ./setup_gcloud.sh YOUR_PROJECT_ID
+    ```
+    This script enables the correct APIs and creates a `google-credentials.json` file that your Docker container will use to authenticate.
 
-### b) Generating a Challenge: The "Gusakuza" Flow
+3.  **Launch with Docker Compose:**
+    This single command builds and runs your entire application stack.
+    ```bash
+    docker-compose up --build -d
+    ```
+    Your application is now live at `http://localhost:2500` with all features enabled!
 
-The `generate_challenge` function now has more complex logic to handle the two-step "Gusakuza" (riddle) game.
+-----
 
-**`main.py` Snippet:**
-```python
-async def generate_challenge(difficulty: int, state: GameState) -> dict:
-    # ... (code for selecting challenge type)
-    challenge_type = random.choice(challenge_types)
+## 4. How Gemini is Used: A Look Under the Hood
 
+This application uses the Gemini model for more than just simple tasks. It uses several techniques to get high-quality, reliable responses from the model. This is a process called **grounding**.
+
+### Grounding Technique 1: Retrieval-Augmented Generation (RAG)
+
+**RAG** is a technique where you provide the model with information to "ground" its response in reality. In our case, we use the `riddles.json` file to give the model examples of Kinyarwanda riddles.
+
+*   **How it works:** When generating a new riddle, the application retrieves a few random examples from `riddles.json` and includes them in the prompt. This is also known as **few-shot prompting**.
+
+*   **Code Snippet (`main.py`):**
+    ```python
     if challenge_type == "gusakuza":
         prompt = "Generate a Kinyarwanda riddle (igisakuzo). The response should be in the format 'riddle|answer'."
-        response = await model.generate_content_async(prompt)
-        # This is the initial "Sakwe sakwe!" part.
-        return {
-            "challenge_type": "gusakuza_init",
-            "source_text": "Sakwe sakwe!",
-            "target_text": response.text, # Store "riddle|answer"
-            "context": "Reply with 'soma' to get the riddle.",
-        }
-    # ... (rest of the logic)
-```
-**Explanation:** When a `gusakuza` challenge is chosen, the app first generates the riddle and its answer from the AI. However, it stores the answer internally and sends a special `gusakuza_init` challenge to the frontend. The user first sees "Sakwe sakwe!" and must respond with "soma" (handled by a separate `/soma` endpoint) to receive the actual riddle.
+        if IBISAKUZO_EXAMPLES:
+            # Retrieve examples from riddles.json
+            examples = random.sample(IBISAKUZO_EXAMPLES, min(len(IBISAKUZO_EXAMPLES), 3))
+            # Augment the prompt with the examples
+            example_text = "\n".join([f"Example: {ex['riddle']} | {ex['answer']}" for ex in examples])
+            prompt += f"\nHere are some examples:\n{example_text}"
+    ```
 
-### c) Evaluating the Answer
+### Grounding Technique 2: Prompt Engineering
 
-The `evaluate_answer` function uses Gemini to act as an expert judge, determining if the user's response is accurate.
+**Prompt engineering** is the art of crafting a good prompt. A well-crafted prompt can dramatically improve the quality of the model's response.
 
-**`main.py` Snippet:**
-```python
-async def evaluate_answer(user_answer: str, target_text: str, challenge_type: str) -> bool:
-    # ... (prompt construction logic)
+*   **How it works:** When evaluating a user's answer, we give the model a specific persona ("You are an expert..."), provide it with context, and tell it exactly how to respond ("Respond ONLY with 'Correct' or 'Incorrect'").
+
+*   **Code Snippet (`main.py`):**
+    ```python
     prompt = (
         f"You are an expert in Kinyarwanda riddles (Ibisakuzo). The riddle's correct answer is '{target_text}'. "
         f"The user guessed '{user_answer}'. "
-        # ...
-        f"Respond ONLY with 'Correct' or 'Incorrect'."
+        f"Is the user's guess a correct or acceptable answer for this riddle? "
+        f"Consider common variations and synonyms. Respond ONLY with 'Correct' or 'Incorrect'."
     )
-    response = await model.generate_content_async(prompt)
-    return "correct" in response.text.lower()
-```
-**Explanation:** The prompt here is very specific, instructing the AI to respond *only* with "Correct" or "Incorrect." This allows us to use a simple string check to get a reliable boolean result.
+    ```
 
-### d) The Live Audio Chat Feature
+### Multimodality: Transcribing Audio
 
-We've added two new endpoints to handle voice interaction.
+Gemini is a **multimodal** model, which means it can understand different types of input, including text and audio. We use this feature in dev mode to transcribe audio.
 
-**`main.py` Snippet:**
-```python
-# Initialize Google Cloud clients
-speech_client = speech.SpeechClient()
-tts_client = texttospeech.TextToSpeechClient()
+*   **How it works:** The application sends the audio file directly to the Gemini API and asks it to transcribe the audio into text.
 
-@app.post("/transcribe")
-async def transcribe_audio(audio_file: UploadFile = File(...)):
-    # ... (code to read audio file)
-    audio = speech.RecognitionAudio(content=content)
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
-        sample_rate_hertz=48000,
-        language_code="rw-RW",
-    )
-    response = speech_client.recognize(config=config, audio=audio)
-    # ... (return transcript)
-
-@app.post("/synthesize")
-async def synthesize_speech(text: str = Form(...)):
-    synthesis_input = texttospeech.SynthesisInput(text=text)
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="rw-RW", name="rw-RW-Standard-A"
-    )
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
-    )
-    response = tts_client.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
-    return StreamingResponse(io.BytesIO(response.audio_content), media_type="audio/mpeg")
-```
-**Explanation:** The `/transcribe` endpoint takes a recorded audio file and uses the Speech-to-Text API to convert it into Kinyarwanda text. The `/synthesize` endpoint does the reverse, converting a string of text into natural-sounding Kinyarwanda speech, which is then streamed back to the user.
+*   **Code Snippet (`main.py`):**
+    ```python
+    @app.post("/transcribe")
+    async def transcribe_audio(audio_file: UploadFile = File(...)):
+        if DEV_MODE:
+            # Path A: Use Gemini for transcription
+            logger.info("Transcribing audio using Gemini in Dev Mode...")
+            audio_blob = {
+                'mime_type': audio_file.content_type,
+                'data': await audio_file.read()
+            }
+            response = await model.generate_content_async(["Transcribe this Kinyarwanda audio:", audio_blob])
+            return TranscribeResponse(transcript=response.text)
+        else:
+            # Path B: Use the dedicated Google Cloud Speech-to-Text API
+            # ...
+    ```
 
 -----
 
-## 5. Running the Application with Docker Compose
+## 5. Troubleshooting Common Issues
 
-Docker Compose allows us to run our entire application stack—the FastAPI backend and the MongoDB database—with a single command.
+*   **`ModuleNotFoundError: No module named 'google.generativeai'`**
+    *   **Solution:** You forgot to install the dependencies! Run `pip install -r requirements.txt`.
 
-**`docker-compose.yml` Snippet:**
-```yaml
-name: bavuga-app
+*   **`503 Service Unavailable` for `/get_challenge`**
+    *   **Solution:** This usually means your `GEMINI_API_KEY` is missing or invalid. Double-check your `.env` file.
 
-services:
-  app:
-    build: .
-    image: bavuga-app:latest
-    container_name: bavuga-app
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
-      - MONGODB_URI=mongodb://database:27017
-      - DATABASE_NAME=language_app
-    volumes:
-      - ./google-credentials.json:/app/google-credentials.json:ro
-    depends_on:
-      database:
-        condition: service_healthy
+*   **Audio buttons are disabled in Production Mode.**
+    *   **Solution:** This means the dedicated audio APIs failed to initialize. Make sure you have run the `./setup_gcloud.sh` script and that billing is enabled on your Google Cloud project.
 
-  database:
-    image: mongo:latest
-    # ... (rest of the database configuration)
-```
-**Explanation:**
-*   The `app` service now includes a `GOOGLE_APPLICATION_CREDENTIALS` environment variable, which tells the Google Cloud libraries where to find the authentication file.
-*   The `volumes` section mounts our local `google-credentials.json` file into the container in read-only (`:ro`) mode for security.
+-----
 
-To run everything, first complete the authentication setup, then use the command:
-```bash
-docker-compose up --build -d
-```
-Your application will be available at `http://localhost:8000`.
+Thank you for following this guide. We can't wait to see what you create. Happy coding!

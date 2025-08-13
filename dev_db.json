@@ -1,0 +1,148 @@
+{
+    "challenges": [
+        {
+            "_id": {
+                "$oid": "60c72b9f9b1d8b3b4e8a0b1b"
+            },
+            "source_text": "Muraho neza?",
+            "target_text": "Hello, how are you?",
+            "context": "A common greeting.",
+            "challenge_type": "kin_to_eng_phrase",
+            "difficulty": 1
+        },
+        {
+            "source_text": "riddle",
+            "target_text": "Mfite umutwe ariko nta bwonko, mfite umunwa ariko ntavuga, mfite amaboko ariko ntakora.  Ndi iki?|igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b284db1a027500ee25c51"
+            }
+        },
+        {
+            "source_text": "riddle",
+            "target_text": "Mfite umutwe ariko nta bwenge, mfite amaboko ariko nta maboko, ndakura ariko ntakura.  Ndi iki?|igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b285fb1a027500ee25c53"
+            }
+        },
+        {
+            "source_text": "riddle",
+            "target_text": "Mfite umutwe ariko nta bwonko, mfite umunwa ariko ntavuga, mfite amaboko ariko ntakora.  Ndi iki?|igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b33b83d028fc4628628c0"
+            }
+        },
+        {
+            "source_text": "Mfite umutwe ariko nta bwonko, mfite umunwa ariko ntavuga, mfite amaboko ariko ntakora.",
+            "target_text": "Igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b3ed50ffa644dc75ca238"
+            }
+        },
+        {
+            "source_text": "Ndi muremure, mfite umutwe, ariko nta bwonko mfite.",
+            "target_text": "Igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b72a12b0d2aec839efdcb"
+            }
+        },
+        {
+            "source_text": "Mfite amaguru atari yo ngenda, mfite umunwa utari wo mvuga, mfite amaso atari yo mbona.",
+            "target_text": "Igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b73e92b0d2aec839efdcc"
+            }
+        },
+        {
+            "source_text": "Mfite amaboko ariko nta biganza, mfite umutwe ariko nta bwonko.",
+            "target_text": "Igiti",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689b74292b0d2aec839efdce"
+            }
+        }
+    ],
+    "submissions": [
+        {
+            "challenge_id": "689b284db1a027500ee25c51",
+            "user_answer": "Yambu, Wiriwe ute?",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689b2858b1a027500ee25c52"
+            },
+            "submitted_at": "2025-08-12T11:41:12.281687"
+        },
+        {
+            "challenge_id": "689b285fb1a027500ee25c53",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689b326db1a027500ee25c54"
+            },
+            "submitted_at": "2025-08-12T12:24:13.121518"
+        },
+        {
+            "challenge_id": "689b3ed50ffa644dc75ca238",
+            "user_answer": "Yambu, Wiriwe ute?",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689b42f20ffa644dc75ca239"
+            },
+            "submitted_at": "2025-08-12T13:34:42.721000"
+        },
+        {
+            "challenge_id": "689b73e92b0d2aec839efdcc",
+            "user_answer": "Yambu, Wiriwe ute?",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689b74062b0d2aec839efdcd"
+            },
+            "submitted_at": "2025-08-12T17:04:06.460484"
+        },
+        {
+            "challenge_id": "689b74292b0d2aec839efdce",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689b744a2b0d2aec839efdcf"
+            },
+            "submitted_at": "2025-08-12T17:05:14.313682"
+        }
+    ],
+    "game_state": [
+        {
+            "_id": {
+                "$oid": "60c72b9f9b1d8b3b4e8a0b1a"
+            },
+            "state_name": "global",
+            "lives": 3,
+            "score": 50,
+            "incorrect_answers": [],
+            "pending_riddle": null
+        }
+    ]
+}
