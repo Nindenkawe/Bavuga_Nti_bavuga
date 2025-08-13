@@ -20,7 +20,7 @@ pyvenv.cfg
 
 # Google Cloud Credentials
 google-credentials.json
-
+dev_db.json
 # Python
 __pycache__/
 *.pyc

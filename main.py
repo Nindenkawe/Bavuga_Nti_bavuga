@@ -44,7 +44,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
-GEMMA_MODEL_NAME = "gemini-1.5-flash-latest"
+GEMMA_MODEL_NAME = "gemini-2.5-flash"
 MAX_RETRIES = 3
 BASE_DELAY = 1
 POINTS_PER_CORRECT_ANSWER = 10
