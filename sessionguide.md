@@ -1,10 +1,10 @@
 # Welcome to the Bavuga Ntibavuga Developer's Guide
 
-Hello, fellow developer! Welcome to the official guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. If you're excited about building smart, interactive applications that feel alive, you're in the right place.
+Welcome to this guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. designed to showcase what we have been learning in the **Build with Ai** organised by **GDG Kigali**. 
 
-This guide is your all-access pass. We'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
+This guide will show you the aproach i took in making this game web app with a local context at its core. I'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
 
-### Choose Your Adventure
+### Choose Your Mode
 
 You have two paths for running this application. Choose the one that fits your goal:
 
@@ -13,7 +13,7 @@ You have two paths for running this application. Choose the one that fits your g
     *   **Requirements:** Only a `GEMINI_API_KEY`.
     *   **Features:** Uses the powerful multimodal Gemini API for game logic and speech-to-text, with a simple JSON file for a database. No Docker, no billing required.
 
-2.  **Path B: The Full Production Experience**
+2.  **Path B: The Full Production Mode**
     *   **Goal:** Deploy the complete, production-ready application.
     *   **Requirements:** Docker, a billing-enabled Google Cloud project, and API keys.
     *   **Features:** Uses dedicated, high-performance Google Cloud APIs for audio and a robust MongoDB database, all managed by Docker.

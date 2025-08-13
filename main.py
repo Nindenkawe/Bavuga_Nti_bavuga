@@ -349,8 +349,7 @@ async def evaluate_answer(
         
         logger.info(f"--- GEMINI API REQUEST ---\nPROMPT: {prompt}\n")
         response = await model.generate_content_async(prompt)
-        logger.info(f"--- GEMINI API RESPONSE ---
-RESPONSE: {response.text}\n")
+        logger.info(f"--- GEMINI API RESPONSE ---\nRESPONSE: {response.text}\n")
 
         # Stricter check for the word 'correct'
         return response.text.strip().lower() == 'correct'

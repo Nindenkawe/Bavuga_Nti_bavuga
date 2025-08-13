@@ -32,3 +32,6 @@ venv/
 ENV/
 venv.bak/
 venv.old/
+
+# Local database
+dev_db.json
