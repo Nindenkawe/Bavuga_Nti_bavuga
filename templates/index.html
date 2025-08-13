@@ -90,9 +90,14 @@
             font-weight: 700;
             font-size: 1.3rem;
         }
-        .score-display, .lives-display {
+        .score-display {
             font-family: 'VT323', monospace;
-            color: var(--accent-color);
+            color: #9370DB; /* Mauve color */
+            font-size: 2.5rem;
+        }
+        .lives-display {
+            font-family: 'VT323', monospace;
+            color: #9370DB; /* Mauve color for the hearts */
             font-size: 2.5rem;
         }
         .challenge-box {
@@ -143,8 +148,8 @@
             <div id="game-mode-selector" class="flex items-center">
                 <select id="game-mode-select" class="btn">
                     <option value="" disabled selected>Change Mode</option>
-                    <option value="translation">Translation</option>
-                    <option value="riddles">Riddles</option>
+                    <option value="translation">BavugaNtiBavuga</option>
+                    <option value="sakwe">Sakwe Sakwe</option>
                     <option value="image">Image</option>
                 </select>
             </div>
@@ -260,7 +265,7 @@
     }
 
     function updateScoreboard() {
-        document.getElementById('lives-count').textContent = '❤️'.repeat(lives);
+        document.getElementById('lives-count').textContent = '♥'.repeat(lives);
         document.getElementById('current-score').textContent = score;
     }
 
@@ -314,10 +319,10 @@
                 somaBtn.classList.add('hidden');
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                    instructionElement.textContent = 'Describe the image in Kinyarwanda or English:';
+                    instructionElement.textContent = 'What do you think this image means? Describe it in Kinyarwanda or English:';
                 } else {
                     sourceTextElement.textContent = data.source_text;
-                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Translate to English:' : 'Translate to Kinyarwanda:';
+                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'What do you think this means in English?' : 'What do you think this means in Kinyarwanda?';
                 }
                 contextTextElement.textContent = data.context || '';
             }

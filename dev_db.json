@@ -79,6 +79,632 @@
             "_id": {
                 "$oid": "689b74292b0d2aec839efdce"
             }
+        },
+        {
+            "source_text": "Mfite ijosi ariko nta mutwe, mfite umunwa ariko ntavuga, mfite amaboko ariko ntakora.",
+            "target_text": "Isahani",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c6de2b1a3e7c019117bf1"
+            }
+        },
+        {
+            "source_text": "Mfite umutwe ariko nta bwonko, mfite umunwa ariko ntavuga, mfite amaguru ariko ntagenda.",
+            "target_text": "Itebe",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c6dfcb1a3e7c019117bf3"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c6e73377ba0eac4206853"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c6f23377ba0eac4206855"
+            }
+        },
+        {
+            "source_text": "Mfite amaguru ariko ntagenda, mfite umutwe ariko ntatekereza,  mfite amaso ariko ntabona.",
+            "target_text": "Igitanda",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c6f63377ba0eac4206856"
+            }
+        },
+        {
+            "source_text": "Mfite umutwe ariko nta bwonko, mfite umunwa ariko ntavuga, mfite amaboko ariko ntakora.",
+            "target_text": "Icyuma",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c701a377ba0eac4206858"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7028377ba0eac4206859"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75136c1e73486cddb2fa"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75216c1e73486cddb2fb"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw1.jpg",
+            "target_text": "Kinyarwanda: Imirima myiza y'u Rwanda igaragara mu kirere gifite ibicu | English: The stunning Rwandan volcanoes are showcased under a cloudy sky.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75286c1e73486cddb2fc"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75406c1e73486cddb2fd"
+            }
+        },
+        {
+            "source_text": "Ibuka hakurya",
+            "target_text": "Utuzu tw'abashumba.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75bc6c1e73486cddb2fe"
+            }
+        },
+        {
+            "source_text": "Nuriye umugongo nnya ibuye",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75cc6c1e73486cddb300"
+            }
+        },
+        {
+            "source_text": "Buhiri bwa Kamango yakubitaga so amuruta ?",
+            "target_text": "Uruyuki.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c75f26c1e73486cddb302"
+            }
+        },
+        {
+            "source_text": "Gacika gasubiraho",
+            "target_text": "Urwara.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c76076c1e73486cddb304"
+            }
+        },
+        {
+            "source_text": "Karusha umuntu kurunga",
+            "target_text": "Uruyuki.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c76186c1e73486cddb306"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c774f6c1e73486cddb308"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77686c1e73486cddb309"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77746c1e73486cddb30a"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw1.jpg",
+            "target_text": "Kinyarwanda: Imirima myiza ya Gisagara igaragara mu kirere cyuzuye ibicu | English: A breathtaking view of the Gisagara volcanoes under a cloudy sky.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c777a6c1e73486cddb30b"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77926c1e73486cddb30c"
+            }
+        },
+        {
+            "source_text": "Nahinze umurima utagira ikiyorero",
+            "target_text": "Uruzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77c1110add89ca0fdc31"
+            }
+        },
+        {
+            "source_text": "Buhiri bwa Kamango yakubitaga so amuruta ?",
+            "target_text": "Uruyuki.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77d0110add89ca0fdc33"
+            }
+        },
+        {
+            "source_text": "Nsimbutse umugande nnya ibuye",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77db110add89ca0fdc35"
+            }
+        },
+        {
+            "source_text": "Ngira inka nkayirya igenda",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c77f5110add89ca0fdc37"
+            }
+        },
+        {
+            "source_text": "Umuti w'ubukene ni umurimo",
+            "target_text": "The cure for poverty is work",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c780f110add89ca0fdc39"
+            }
+        },
+        {
+            "source_text": "Hello",
+            "target_text": "Muraho",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7827110add89ca0fdc3b"
+            }
+        },
+        {
+            "source_text": "Umuti ukomoka kure urwara rugera hafi",
+            "target_text": "A distant cure does not save one from a nearby sickness",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c783b110add89ca0fdc3d"
+            }
+        },
+        {
+            "source_text": "Umuti w'uburwayi ni ugukira",
+            "target_text": "The cure for illness is recovery.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7854110add89ca0fdc3f"
+            }
+        },
+        {
+            "source_text": "Ibuka hakurya",
+            "target_text": "Utuzu tw'abashumba.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7859110add89ca0fdc40"
+            }
+        },
+        {
+            "source_text": "Igira inyuma y'inzu uce inkoni y'umuze n'umunzenzi",
+            "target_text": "Urusogo n'urusogi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7866110add89ca0fdc42"
+            }
+        },
+        {
+            "source_text": "Aka kagabo ni gato ariko kakwirukana so",
+            "target_text": "Uruyuki \u2013 Ivubi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c787f110add89ca0fdc44"
+            }
+        },
+        {
+            "source_text": "/sampleimg/Rw3.jpeg",
+            "target_text": "Kinyarwanda: Umujyi wa Kigali ureshya n'imisozi miremire ifite inyubako zigezweho | English: Kigali's skyline blends modern skyscrapers with rolling hills and traditional architecture.",
+            "context": "Describe the image in either Kinyarwanda or English.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c78c0110add89ca0fdc46"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c78f2110add89ca0fdc48"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7901110add89ca0fdc49"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7903110add89ca0fdc4a"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7906110add89ca0fdc4b"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a6b110add89ca0fdc4c"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a74110add89ca0fdc4d"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a7e110add89ca0fdc4e"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a83110add89ca0fdc4f"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a86110add89ca0fdc50"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7a9eef8ca15f413dce96"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7aa0ef8ca15f413dce97"
+            }
+        },
+        {
+            "source_text": "Nahinze umurima utagira ikiyorero",
+            "target_text": "Uruzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7aa8ef8ca15f413dce98"
+            }
+        },
+        {
+            "source_text": "Ndica simporwe",
+            "target_text": "Uruzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7ab5ef8ca15f413dce9a"
+            }
+        },
+        {
+            "source_text": "Katemba igogo",
+            "target_text": "Uturaso ku murundi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7ac8ef8ca15f413dce9c"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7adaef8ca15f413dce9e"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7cfcef8ca15f413dce9f"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7d00ef8ca15f413dcea0"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7d02ef8ca15f413dcea1"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7d09ef8ca15f413dcea2"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7d15ef8ca15f413dcea3"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7d7d99e27e28ddc71868"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7fe2c48c2cad0bb31100"
+            }
+        },
+        {
+            "source_text": "Nuriye umugongo nnya ibuye",
+            "target_text": "Uruyuzi.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c7ffec48c2cad0bb31101"
+            }
+        },
+        {
+            "source_text": "Turadundaraye",
+            "target_text": "Utubyi tw'umushumba.",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c8009c48c2cad0bb31103"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c8016c48c2cad0bb31105"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (eng_to_kin_phrase)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "eng_to_kin_phrase",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c81a8f00ce5a6ac4aee92"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c81abf00ce5a6ac4aee93"
+            }
+        },
+        {
+            "source_text": "Ubugeni bw'ino burampuha",
+            "target_text": "Wabaza ubuhiri mu muhini !",
+            "context": "Igisakuzo",
+            "challenge_type": "gusakuza",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c81bbf00ce5a6ac4aee94"
+            }
+        },
+        {
+            "source_text": "https://picsum.photos/seed/picsum/200/300",
+            "target_text": "A random image",
+            "context": "This is a development mode image challenge.",
+            "challenge_type": "image_description",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c81caf00ce5a6ac4aee96"
+            }
+        },
+        {
+            "source_text": "Dev mode source text (kin_to_eng_proverb)",
+            "target_text": "Dev mode target text",
+            "context": "This is a development mode challenge.",
+            "challenge_type": "kin_to_eng_proverb",
+            "difficulty": 1,
+            "_id": {
+                "$oid": "689c8b18db8909013ec8a659"
+            }
         }
     ],
     "submissions": [
@@ -131,6 +757,256 @@
                 "$oid": "689b744a2b0d2aec839efdcf"
             },
             "submitted_at": "2025-08-12T17:05:14.313682"
+        },
+        {
+            "challenge_id": "689c6de2b1a3e7c019117bf1",
+            "user_answer": "inyanja",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c6df3b1a3e7c019117bf2"
+            },
+            "submitted_at": "2025-08-13T10:50:27.954888"
+        },
+        {
+            "challenge_id": "689c6e73377ba0eac4206853",
+            "user_answer": "Yambu, Wiriwe ute?",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c6f1d377ba0eac4206854"
+            },
+            "submitted_at": "2025-08-13T10:55:25.384677"
+        },
+        {
+            "challenge_id": "689c6f63377ba0eac4206856",
+            "user_answer": "Ngicyo",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c7007377ba0eac4206857"
+            },
+            "submitted_at": "2025-08-13T10:59:19.209156"
+        },
+        {
+            "challenge_id": "689c75bc6c1e73486cddb2fe",
+            "user_answer": "hino",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c75c46c1e73486cddb2ff"
+            },
+            "submitted_at": "2025-08-13T11:23:48.854191"
+        },
+        {
+            "challenge_id": "689c75cc6c1e73486cddb300",
+            "user_answer": "Gitore",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c75eb6c1e73486cddb301"
+            },
+            "submitted_at": "2025-08-13T11:24:27.735193"
+        },
+        {
+            "challenge_id": "689c75f26c1e73486cddb302",
+            "user_answer": "gitore",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c75fe6c1e73486cddb303"
+            },
+            "submitted_at": "2025-08-13T11:24:46.026031"
+        },
+        {
+            "challenge_id": "689c76076c1e73486cddb304",
+            "user_answer": "Ngicyo",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c76136c1e73486cddb305"
+            },
+            "submitted_at": "2025-08-13T11:25:07.742228"
+        },
+        {
+            "challenge_id": "689c76186c1e73486cddb306",
+            "user_answer": "Umurwayi",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c761f6c1e73486cddb307"
+            },
+            "submitted_at": "2025-08-13T11:25:19.780499"
+        },
+        {
+            "challenge_id": "689c77c1110add89ca0fdc31",
+            "user_answer": "ngicyo",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c77cb110add89ca0fdc32"
+            },
+            "submitted_at": "2025-08-13T11:32:27.784528"
+        },
+        {
+            "challenge_id": "689c77d0110add89ca0fdc33",
+            "user_answer": "uruzi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c77d6110add89ca0fdc34"
+            },
+            "submitted_at": "2025-08-13T11:32:38.625206"
+        },
+        {
+            "challenge_id": "689c77db110add89ca0fdc35",
+            "user_answer": "umuvure",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c77eb110add89ca0fdc36"
+            },
+            "submitted_at": "2025-08-13T11:32:59.956744"
+        },
+        {
+            "challenge_id": "689c77f5110add89ca0fdc37",
+            "user_answer": "ijosi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c77fe110add89ca0fdc38"
+            },
+            "submitted_at": "2025-08-13T11:33:18.511536"
+        },
+        {
+            "challenge_id": "689c780f110add89ca0fdc39",
+            "user_answer": "Umurimo",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c7823110add89ca0fdc3a"
+            },
+            "submitted_at": "2025-08-13T11:33:55.510105"
+        },
+        {
+            "challenge_id": "689c7827110add89ca0fdc3b",
+            "user_answer": "Uraho/Muraho",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c7836110add89ca0fdc3c"
+            },
+            "submitted_at": "2025-08-13T11:34:14.438130"
+        },
+        {
+            "challenge_id": "689c783b110add89ca0fdc3d",
+            "user_answer": "pass",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c784f110add89ca0fdc3e"
+            },
+            "submitted_at": "2025-08-13T11:34:39.295828"
+        },
+        {
+            "challenge_id": "689c7859110add89ca0fdc40",
+            "user_answer": "Hino",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7861110add89ca0fdc41"
+            },
+            "submitted_at": "2025-08-13T11:34:57.218603"
+        },
+        {
+            "challenge_id": "689c7866110add89ca0fdc42",
+            "user_answer": "Urubingo",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7875110add89ca0fdc43"
+            },
+            "submitted_at": "2025-08-13T11:35:17.778907"
+        },
+        {
+            "challenge_id": "689c787f110add89ca0fdc44",
+            "user_answer": "uruyuki",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7892110add89ca0fdc45"
+            },
+            "submitted_at": "2025-08-13T11:35:46.270039"
+        },
+        {
+            "challenge_id": "689c78c0110add89ca0fdc46",
+            "user_answer": "Amagorofa kumusozi ikirere nibicu",
+            "is_correct": true,
+            "score": 10,
+            "_id": {
+                "$oid": "689c78ef110add89ca0fdc47"
+            },
+            "submitted_at": "2025-08-13T11:37:19.050989"
+        },
+        {
+            "challenge_id": "689c7aa8ef8ca15f413dce98",
+            "user_answer": "pass",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7aadef8ca15f413dce99"
+            },
+            "submitted_at": "2025-08-13T11:44:45.473325"
+        },
+        {
+            "challenge_id": "689c7ab5ef8ca15f413dce9a",
+            "user_answer": "umwambi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7abfef8ca15f413dce9b"
+            },
+            "submitted_at": "2025-08-13T11:45:03.888932"
+        },
+        {
+            "challenge_id": "689c7ac8ef8ca15f413dce9c",
+            "user_answer": "uruzi",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c7ad0ef8ca15f413dce9d"
+            },
+            "submitted_at": "2025-08-13T11:45:20.768955"
+        },
+        {
+            "challenge_id": "689c7ffec48c2cad0bb31101",
+            "user_answer": "Gitore",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c8005c48c2cad0bb31102"
+            },
+            "submitted_at": "2025-08-13T12:07:33.376821"
+        },
+        {
+            "challenge_id": "689c8009c48c2cad0bb31103",
+            "user_answer": "Ngicyo",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c800ec48c2cad0bb31104"
+            },
+            "submitted_at": "2025-08-13T12:07:42.572220"
+        },
+        {
+            "challenge_id": "689c81bbf00ce5a6ac4aee94",
+            "user_answer": "gitore",
+            "is_correct": false,
+            "score": 0,
+            "_id": {
+                "$oid": "689c81c2f00ce5a6ac4aee95"
+            },
+            "submitted_at": "2025-08-13T12:14:58.798809"
         }
     ],
     "game_state": [
@@ -140,9 +1016,11 @@
             },
             "state_name": "global",
             "lives": 3,
-            "score": 50,
+            "score": 0,
             "incorrect_answers": [],
-            "pending_riddle": null
+            "pending_riddle": "Igira inyuma y'inzu uce inkoni y'umuze n'umunzenzi|Urusogo n'urusogi.",
+            "game_mode": "translation",
+            "thematic_words": []
         }
     ]
 }

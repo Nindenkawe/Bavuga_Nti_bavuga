@@ -16,3 +16,4 @@ Jinja2
 # Utilities
 python-dotenv
 python-multipart
+Pillow

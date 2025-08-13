@@ -134,6 +134,8 @@ class GameState(BaseModel):
     score: int = 0
     incorrect_answers: list[str] = []
     pending_riddle: Optional[str] = None
+    game_mode: str = "translation"
+    thematic_words: list[str] = []
 
     class Config:
         arbitrary_types_allowed = True
