@@ -320,7 +320,7 @@ async def generate_challenge(
                 "challenge_type": challenge_type,
                 "source_text": parts[0].strip(),
                 "target_text": parts[1].strip(),
-                "context": context, # Context is not needed for this simple format
+                "context": context, # Context from story mode
             }
 
     except Exception as e:

@@ -389,7 +389,6 @@
                 updateScoreboard();
             }
 
-            setTimeout(getNewChallenge, 3000);
         } catch (error) {
             feedbackMessage.textContent = `Error: ${error.message}`;
             console.error("Error submitting answer:", error);
