@@ -35,6 +35,8 @@ from db_logic import (
     init_app_mode,
     DEV_MODE,
 )
+from processors.challenge_generator import ChallengeGeneratorProcessor
+from processors.answer_evaluator import AnswerEvaluatorProcessor
 
 # --- Configuration ---
 load_dotenv()
@@ -65,10 +67,12 @@ api_key = os.getenv("GEMINI_API_KEY")
 model = None
 speech_client = None
 tts_client = None
+challenge_generator = None
+answer_evaluator = None
 
 
 def initialize_clients(dev_mode: bool):
-    global model, speech_client, tts_client
+    global model, speech_client, tts_client, challenge_generator, answer_evaluator
     if api_key:
         try:
             genai.configure(api_key=api_key)
@@ -78,6 +82,9 @@ def initialize_clients(dev_mode: bool):
             logger.error(f"Failed to initialize Gemini AI model: {e}")
     else:
         logger.warning("GEMINI_API_KEY not found, core AI features will be disabled.")
+
+    challenge_generator = ChallengeGeneratorProcessor(model, dev_mode)
+    answer_evaluator = AnswerEvaluatorProcessor(model)
 
     if not dev_mode:
         try:
@@ -133,231 +140,6 @@ class TranscribeResponse(BaseModel):
     transcript: str
 
 
-# --- Generative AI & Mock Functions ---
-async def generate_challenge_dev(
-    difficulty: int, state: GameState, game_mode: str = "translation"
-) -> dict:
-    """Generates a static challenge for development mode."""
-    await asyncio.sleep(0.05)  # Simulate async call
-
-    if game_mode == "sakwe":
-        challenge_type = "gusakuza"
-    elif game_mode == "image":
-        challenge_type = "image_description"
-    else:  # translation
-        challenge_type = random.choice(
-            ["kin_to_eng_proverb", "eng_to_kin_phrase"]
-        )
-
-    if challenge_type == "gusakuza":
-        if IBISAKUZO_EXAMPLES:
-            riddle_data = random.choice(IBISAKUZO_EXAMPLES)
-            target_text = f"{riddle_data['riddle']}|{riddle_data['answer']}"
-        else:
-            target_text = "Igisakuzo|Some Answer"  # Fallback
-        return {
-            "challenge_type": "gusakuza_init",
-            "source_text": "Sakwe sakwe!",
-            "target_text": target_text,
-            "context": "Reply with 'soma' to get the riddle.",
-        }
-    elif challenge_type == "image_description":
-        return {
-            "challenge_type": challenge_type,
-            "source_text": "https://picsum.photos/seed/picsum/200/300",
-            "target_text": "A random image",
-            "context": "This is a development mode image challenge.",
-        }
-    else:
-        return {
-            "challenge_type": challenge_type,
-            "source_text": f"Dev mode source text ({challenge_type})",
-            "target_text": "Dev mode target text",
-            "context": "This is a development mode challenge.",
-        }
-
-
-async def evaluate_answer_dev(
-    user_answer: str, target_text: str, challenge_type: str
-) -> bool:
-    await asyncio.sleep(0.05)
-    return user_answer.lower() == target_text.lower()
-
-
-async def generate_challenge(
-    difficulty: int, state: GameState, game_mode: str = "translation"
-) -> dict:
-    """Generates a challenge using the Gemini AI model and thematic linking."""
-    if not model:
-        return await generate_challenge_dev(difficulty, state, game_mode)
-
-    try:
-        level = {1: "beginner", 2: "intermediate", 3: "advanced"}.get(
-            difficulty, "intermediate"
-        )
-        challenge_type = ""
-        prompt = ""
-        context = None
-
-        # --- Story Mode ---
-        if game_mode == "story":
-            if not state.story or state.story_chapter >= len(json.loads(state.story).get("chapters", [])):
-                story_prompt = "Write a short, engaging story for a language learning game. The story should be about a character exploring Rwanda. The story should be broken down into 3 chapters. Each chapter should introduce new vocabulary. The story should be in English. The output should be a JSON object with a 'title' and a list of 'chapters', where each chapter is a string. Do not add any other text, titles, or formatting."
-                logger.info(f"--- GEMINI API STORY GENERATION REQUEST ---\nPROMPT: {story_prompt}\n")
-                response = await model.generate_content_async(story_prompt)
-                logger.info(f"--- GEMINI API STORY GENERATION RESPONSE ---\nRESPONSE: {response.text}\n")
-                
-                cleaned_response = response.text.strip().replace("```json", "").replace("```", "")
-                story_data = json.loads(cleaned_response)
-                state.story = json.dumps(story_data)
-                state.story_chapter = 0
-            
-            story_data = json.loads(state.story)
-            chapter_text = story_data["chapters"][state.story_chapter]
-            challenge_type = "story_translation"
-            prompt = f"Based on this chapter of a story: '{chapter_text}', create a language challenge. The challenge should be a phrase from the story to translate from English to Kinyarwanda. The output should be in the format 'English phrase|Kinyarwanda translation'. Do not add any other text, titles, or formatting."
-            
-            context = f"Chapter {state.story_chapter + 1}: {chapter_text}"
-            state.story_chapter += 1
-
-        # --- Thematic Linking ---
-        elif state.thematic_words:
-            word = state.thematic_words.pop(0)
-            challenge_type = "themed_translation"
-            prompt = f"Provide a simple English phrase using the word '{word}' and its Kinyarwanda translation, separated by a pipe (|). Example: 'The honey is sweet|Uburyo ni buryoshye'. Do not add any other text, titles, or formatting."
-        else:
-            # --- Standard Challenge Generation ---
-            if game_mode == "sakwe":
-                challenge_type = "gusakuza"
-            elif game_mode == "image":
-                challenge_type = "image_description"
-            else:  # translation is the default
-                challenge_type = random.choice(
-                    ["kin_to_eng_proverb", "eng_to_kin_phrase"]
-                )
-
-        # --- Challenge Specific Logic ---
-        if challenge_type == "gusakuza":
-            if not IBISAKUZO_EXAMPLES:
-                return {"error_message": "Riddle database is empty."}
-            riddle_data = random.choice(IBISAKUZO_EXAMPLES)
-            return {
-                "challenge_type": "gusakuza_init",
-                "source_text": "Sakwe sakwe!",
-                "target_text": f"{riddle_data['riddle']}|{riddle_data['answer']}",
-                "context": "Reply with 'soma' to get the riddle.",
-            }
-
-        if challenge_type == "image_description":
-            image_files = [f for f in os.listdir(IMAGE_DIR) if f.endswith(('.png', '.jpg', '.jpeg'))]
-            if not image_files:
-                return {"error_message": "No images found in the sampleimg directory."}
-            
-            random_image_name = random.choice(image_files)
-            image_path = os.path.join(IMAGE_DIR, random_image_name)
-            
-            try:
-                img = Image.open(image_path)
-                prompt = [
-                    "Describe this image of Rwanda in a single, descriptive sentence. Provide the description in both Kinyarwanda and English, separated by a pipe (|). Example: 'Umusozi w'u Rwanda|A Rwandan hill'. Do not add any other text, titles, or formatting.",
-                    img,
-                ]
-                source_text = f"/{IMAGE_DIR}/{random_image_name}"
-            except Exception as e:
-                logger.error(f"Failed to open or process image {image_path}: {e}")
-                return await generate_challenge_dev(difficulty, state, game_mode)
-        
-        elif not prompt: # If prompt wasn't set by thematic link
-            if challenge_type == "kin_to_eng_proverb":
-                 prompt = f"Provide a {level} Kinyarwanda proverb and its English translation, separated by a pipe (|). Example: 'Akabando k'iminsi gacibwa kare|A walking stick for old age is prepared in advance'. Do not add any other text, titles, or formatting."
-            elif challenge_type == "eng_to_kin_phrase":
-                 prompt = f"Provide a simple {level} English phrase and its Kinyarwanda translation, separated by a pipe (|). Example: 'Good morning|Mwaramutse'. Do not add any other text, titles, or formatting."
-
-
-        # --- Gemini API Call ---
-        log_prompt = prompt
-        if isinstance(prompt, list):
-            log_prompt = f"{prompt[0]} [Image: {getattr(prompt[1], 'filename', 'PIL Image')}]"
-
-        logger.info(
-            "\n================================================================\n"
-            "GEMINI API REQUEST\n"
-            "----------------------------------------------------------------\n"
-            "PROMPT:\n%s\n"
-            "================================================================",
-            log_prompt
-        )
-        try:
-            response = await model.generate_content_async(prompt)
-            logger.info(
-                "\n================================================================\n"
-                "GEMINI API RESPONSE\n"
-                "----------------------------------------------------------------\n"
-                "RESPONSE:\n%s\n"
-                "================================================================",
-                response.text
-            )
-        except Exception as e:
-            logger.error(f"Gemini API call failed: {e}. Falling back to dev mode.")
-            return await generate_challenge_dev(difficulty, state, game_mode)
-        
-        # Clean up the response to remove potential markdown
-        cleaned_response = re.sub(r'#+\s*|\*+\s*', '', response.text).strip()
-        parts = cleaned_response.split("|")
-
-        if len(parts) < 2:
-            raise ValueError(f"Invalid response format from agent: {response.text}")
-
-        if challenge_type == "image_description":
-            return {
-                "challenge_type": challenge_type,
-                "source_text": source_text,
-                "target_text": f"Kinyarwanda: {parts[0].strip()} | English: {parts[1].strip()}",
-                "context": "Describe the image in either Kinyarwanda or English.",
-            }
-        else:  # Translation challenges
-            return {
-                "challenge_type": challenge_type,
-                "source_text": parts[0].strip(),
-                "target_text": parts[1].strip(),
-                "context": context, # Context from story mode
-            }
-
-    except Exception as e:
-        logger.error(f"Error generating challenge with agent: {e}")
-        return await generate_challenge_dev(difficulty, state, game_mode)
-
-
-
-async def evaluate_answer(
-    user_answer: str, target_text: str, challenge_type: str
-) -> bool:
-    """Evaluates a user's answer using the Gemini AI model."""
-    if not model:
-        return await evaluate_answer_dev(user_answer, target_text, challenge_type)
-
-    try:
-        # For riddles, the answer must be exact (or a known variation)
-        if challenge_type == "gusakuza":
-             # Use simple string comparison for riddles to enforce cultural accuracy
-            return user_answer.lower().strip() == target_text.lower().strip()
-
-        prompt = (
-            f"You are an expert in Kinyarwanda and English. The target text is '{target_text}'. The user's answer is '{user_answer}'. "
-            f"Is the user's answer a correct translation? Consider synonyms and minor grammatical variations. Respond ONLY with 'Correct' or 'Incorrect'."
-        )
-        
-        logger.info(f"--- GEMINI API REQUEST ---\nPROMPT: {prompt}\n")
-        response = await model.generate_content_async(prompt)
-        logger.info(f"--- GEMINI API RESPONSE ---\nRESPONSE: {response.text}\n")
-
-        # Stricter check for the word 'correct'
-        return response.text.strip().lower() == 'correct'
-    except Exception as e:
-        logger.error(f"Error evaluating answer with agent: {e}")
-        return await evaluate_answer_dev(user_answer, target_text, challenge_type)
-
-
 # --- API Endpoints ---
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -401,7 +183,7 @@ async def get_challenge_endpoint(difficulty: int = 1, game_mode: str = None):
     
     current_state.game_mode = game_mode
     
-    challenge_data = await generate_challenge(difficulty, current_state, game_mode)
+    challenge_data = await challenge_generator.generate_challenge(difficulty, current_state, game_mode)
     
     await update_game_state(current_state)
 
@@ -511,7 +293,7 @@ async def submit_answer_endpoint(
         is_correct = False
         message = "You gave up. The correct answer was:"
     else:
-        is_correct = await evaluate_answer(
+        is_correct = await answer_evaluator.evaluate_answer(
             user_answer, challenge.target_text, challenge.challenge_type
         )
         if is_correct:

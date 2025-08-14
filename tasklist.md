@@ -2,6 +2,26 @@
 
 This file outlines the tasks to improve the "Bavuga Ntibavuga" web application by making it more interactive.
 
+## Refactoring to GenAI Processors
+
+This is a foundational refactoring to make the codebase more modular, maintainable, and ready for real-time audio features. This should be completed before starting on Feature 2.
+
+-   [ ] **Phase 1: Setup and Core Structure**
+    -   [ ] **Task 1.1:** Add `google-deepmind-genai-processors` to `requirements.txt` and install it.
+    -   [ ] **Task 1.2:** Create a new directory named `processors` and initialize it as a Python package.
+
+-   [ ] **Phase 2: Refactoring Core Logic into Processors**
+    -   [ ] **Task 2.1:** Create `processors/challenge_generator.py` and refactor `generate_challenge` logic into a `ChallengeGeneratorProcessor` class.
+    -   [ ] **Task 2.2:** Create `processors/answer_evaluator.py` and refactor `evaluate_answer` logic into an `AnswerEvaluatorProcessor` class.
+
+-   [ ] **Phase 3: Integration and Cleanup**
+    -   [ ] **Task 3.1:** In `main.py`, import and initialize the new processor classes.
+    -   [ ] **Task 3.2:** Update FastAPI endpoints (`/get_challenge`, `/submit_answer`) to use the new processors.
+    -   [ ] **Task 3.3:** Remove the old `generate_challenge*` and `evaluate_answer*` functions from `main.py`.
+
+-   [ ] **Phase 4: Preparing for Audio Features**
+    -   [ ] **Task 4.1:** Create `processors/audio.py` with placeholder classes for `TextToSpeechProcessor` and `SpeechToTextProcessor`.
+
 ## Feature 1: "Gusakuza" Riddle Game
 
 The "Gusakuza" game is a traditional Rwandan riddle game. The goal is to implement this as a new game mode.

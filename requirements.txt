@@ -6,6 +6,7 @@ uvicorn[standard]
 google-generativeai
 google-cloud-speech
 google-cloud-texttospeech
+genai-processors
 
 # Database
 motor
