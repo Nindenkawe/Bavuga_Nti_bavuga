@@ -141,6 +141,7 @@ class GameState(BaseModel):
     thematic_words: list[str] = []
     story: Optional[str] = None
     story_chapter: int = 0
+    difficulty: int = 1
 
     class Config:
         arbitrary_types_allowed = True

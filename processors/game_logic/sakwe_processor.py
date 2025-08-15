@@ -44,7 +44,7 @@ class SakweProcessor(processor.Processor):
             if part.audio:
                 await self.output_queue.put(part)
 
-    async def call(self, input_stream: streams.Stream) -> streams.Stream:
+    async def call(self, input_stream: streams.AsyncIterable[content_api.ProcessorPart]) -> streams.AsyncIterable[content_api.ProcessorPart]:
         """The main game loop that processes incoming audio."""
         async for part in input_stream:
             if not part.audio:
@@ -79,7 +79,7 @@ class SakweProcessor(processor.Processor):
         # This part is important for the processor protocol, even if we don't use it here.
         yield
 
-    async def __call__(self, content: streams.Stream) -> streams.Stream:
+    async def __call__(self, content: streams.AsyncIterable[content_api.ProcessorPart]) -> streams.AsyncIterable[content_api.ProcessorPart]:
         # We need a custom __call__ to handle the output queue
         asyncio.create_task(self.call(content))
         while True:

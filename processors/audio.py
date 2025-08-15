@@ -3,7 +3,7 @@ from typing import TypedDict, AsyncGenerator
 
 from genai_processors.processor import Processor
 from genai_processors import part_processor_function
-from genai_processors.core import speech_to_text, text_to_speech
+# from genai_processors.core import speech_to_text, text_to_speech
 from genai_processors import content_api, streams
 from genai_processors.content_api import ProcessorPart
 
@@ -56,18 +56,18 @@ def create_gemini_text_to_speech_processor(model_name: str) -> Processor:
 
 # --- Google Cloud processors for Production Mode ---
 
-def create_google_speech_to_text_processor(
-    project: str, location: str
-) -> Processor:
-    """Creates a speech-to-text processor using Google Cloud Speech-to-Text."""
-    return speech_to_text.SpeechToText(
-        project=project,
-        location=location,
-        model="long",
-        language_codes=["en-US", "rw"],  # Kinyarwanda and English
-    )
+# def create_google_speech_to_text_processor(
+#     project: str, location: str
+# ) -> Processor:
+#     """Creates a speech-to-text processor using Google Cloud Speech-to-Text.""" 
+#     return speech_to_text.SpeechToText(
+#         project=project,
+#         location=location,
+#         model="long",
+#         language_codes=["en-US", "rw"],  # Kinyarwanda and English
+#     )
 
 
-def create_google_text_to_speech_processor() -> Processor:
-    """Creates a text-to-speech processor using Google Cloud Text-to-Speech."""
-    return text_to_speech.TextToSpeech()
+# def create_google_text_to_speech_processor() -> Processor:
+#     """Creates a text-to-speech processor using Google Cloud Text-to-Speech."""
+#     return text_to_speech.TextToSpeech()

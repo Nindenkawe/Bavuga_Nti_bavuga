@@ -1,10 +1,14 @@
 import os
+import io
+import json
+import random
 from typing import Optional
 
 from fastapi import APIRouter, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
-import io
+from genai_processors import streams, processor, content_api
+from genai_processors.content_api import ProcessorPart
 
 from db_logic import (
     save_challenge,
@@ -19,17 +23,15 @@ from db_logic import (
     DEV_MODE,
 )
 from context import (
-    challenge_generator,
-    answer_evaluator,
+    game_processor,
     tts_processor,
     stt_processor,
 )
-from main import (
+from api.models import (
     ChallengeResponse,
     SubmissionResponse,
     TranscribeResponse,
 )
-from genai_processors import processor, content_api
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -60,19 +62,33 @@ async def home(request: Request):
 
 
 @router.get("/get_challenge", response_model=ChallengeResponse)
-async def get_challenge_endpoint(difficulty: int = 1, game_mode: str = None):
-    if not challenge_generator:
-        raise HTTPException(
-            status_code=503, detail="Challenge generator not available."
-        )
+async def get_challenge_endpoint(difficulty: int = None, game_mode: str = None):
+    if not game_processor:
+        raise HTTPException(status_code=503, detail="Game processor not available.")
 
     current_state = await get_game_state()
     game_mode = game_mode or current_state.game_mode or "translation"
     current_state.game_mode = game_mode
+    difficulty = difficulty or current_state.difficulty
 
-    challenge_data = await challenge_generator.generate_challenge(
-        difficulty, current_state, game_mode
-    )
+    input_data = {
+        "action": "get_challenge",
+        "difficulty": difficulty,
+        "state": current_state.dict(),
+        "game_mode": game_mode,
+    }
+    input_json = json.dumps(input_data)
+    input_stream = streams.stream_content([ProcessorPart(text=input_json)])
+
+    response_json = ""
+    async for part in game_processor(input_stream):
+        if part.text:
+            response_json += part.text
+    
+    try:
+        challenge_data = json.loads(response_json)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Failed to decode response from game processor.")
 
     if "error_message" in challenge_data:
         raise HTTPException(status_code=503, detail=challenge_data["error_message"])
@@ -132,14 +148,39 @@ async def submit_answer_endpoint(
     if any(keyword in user_answer.lower() for keyword in ["gitore", "ngicyo"]):
         message = "You gave up. The correct answer was:"
     else:
-        is_correct = await answer_evaluator.evaluate_answer(
-            user_answer, challenge.target_text, challenge.challenge_type
-        )
+        input_data = {
+            "action": "evaluate_answer",
+            "user_answer": user_answer,
+            "target_text": challenge.target_text,
+            "challenge_type": challenge.challenge_type,
+        }
+        input_json = json.dumps(input_data)
+        input_stream = streams.stream_content([ProcessorPart(text=input_json)])
+
+        response_json = ""
+        async for part in game_processor(input_stream):
+            if part.text:
+                response_json += part.text
+        
+        try:
+            response_data = json.loads(response_json)
+            is_correct = response_data.get("is_correct", False)
+        except json.JSONDecodeError:
+            is_correct = False # Fallback
+            
         if is_correct:
-            current_state.score += 10  # POINTS_PER_CORRECT_ANSWER
+            current_state.score += 10
             message = "Correct!"
             if challenge.challenge_type == "gusakuza":
                 current_state.thematic_words.append(challenge.target_text)
+
+            if current_state.score > 0 and current_state.score % 50 == 0:
+                # Change game mode and increase difficulty
+                game_modes = ["story", "translation", "sakwe", "image"]
+                game_modes.remove(current_state.game_mode)
+                current_state.game_mode = random.choice(game_modes)
+                current_state.difficulty = min(3, current_state.difficulty + 1)
+                message += f" You've unlocked a new game mode: {current_state.game_mode.capitalize()}! Difficulty increased."
         else:
             current_state.lives -= 1
             message = "Incorrect."

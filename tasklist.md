@@ -6,44 +6,44 @@ This file outlines the tasks to improve the "Bavuga Ntibavuga" web application b
 
 This is a foundational refactoring to make the codebase more modular, maintainable, and ready for real-time audio features. This should be completed before starting on Feature 2.
 
--   [ ] **Phase 1: Setup and Core Structure**
-    -   [ ] **Task 1.1:** Add `google-deepmind-genai-processors` to `requirements.txt` and install it.
-    -   [ ] **Task 1.2:** Create a new directory named `processors` and initialize it as a Python package.
+-   [x] **Phase 1: Setup and Core Structure**
+    -   [x] **Task 1.1:** Add `google-deepmind-genai-processors` to `requirements.txt` and install it.
+    -   [x] **Task 1.2:** Create a new directory named `processors` and initialize it as a Python package.
 
--   [ ] **Phase 2: Refactoring Core Logic into Processors**
-    -   [ ] **Task 2.1:** Create `processors/challenge_generator.py` and refactor `generate_challenge` logic into a `ChallengeGeneratorProcessor` class.
-    -   [ ] **Task 2.2:** Create `processors/answer_evaluator.py` and refactor `evaluate_answer` logic into an `AnswerEvaluatorProcessor` class.
+-   [x] **Phase 2: Refactoring Core Logic into Processors**
+    -   [x] **Task 2.1:** Create `processors/challenge_generator.py` and refactor `generate_challenge` logic into a `ChallengeGeneratorProcessor` class.
+    -   [x] **Task 2.2:** Create `processors/answer_evaluator.py` and refactor `evaluate_answer` logic into an `AnswerEvaluatorProcessor` class.
 
--   [ ] **Phase 3: Integration and Cleanup**
-    -   [ ] **Task 3.1:** In `main.py`, import and initialize the new processor classes.
-    -   [ ] **Task 3.2:** Update FastAPI endpoints (`/get_challenge`, `/submit_answer`) to use the new processors.
-    -   [ ] **Task 3.3:** Remove the old `generate_challenge*` and `evaluate_answer*` functions from `main.py`.
+-   [x] **Phase 3: Integration and Cleanup**
+    -   [x] **Task 3.1:** In `main.py`, import and initialize the new processor classes.
+    -   [x] **Task 3.2:** Update FastAPI endpoints (`/get_challenge`, `/submit_answer`) to use the new processors.
+    -   [x] **Task 3.3:** Remove the old `generate_challenge*` and `evaluate_answer*` functions from `main.py`.
 
--   [ ] **Phase 4: Preparing for Audio Features**
-    -   [ ] **Task 4.1:** Create `processors/audio.py` with placeholder classes for `TextToSpeechProcessor` and `SpeechToTextProcessor`.
+-   [x] **Phase 4: Preparing for Audio Features**
+    -   [x] **Task 4.1:** Create `processors/audio.py` with placeholder classes for `TextToSpeechProcessor` and `SpeechToTextProcessor`.
 
 ## Feature 1: "Gusakuza" Riddle Game
 
 The "Gusakuza" game is a traditional Rwandan riddle game. The goal is to implement this as a new game mode.
 
--   [ ] **Task 1.1: Backend - AI Prompt for Riddles:**
-    -   [ ] Create a new prompt for the AI agent to generate "Ibisakuzo" (riddles) in Kinyarwanda.
-    -   [ ] The AI should provide the riddle and the correct answer.
+-   [x] **Task 1.1: Backend - AI Prompt for Riddles:**
+    -   [x] Create a new prompt for the AI agent to generate "Ibisakuzo" (riddles) in Kinyarwanda.
+    -   [x] The AI should provide the riddle and the correct answer.
 
--   [ ] **Task 1.2: Backend - New Game Mode Logic:**
-    -   [ ] Add a new challenge type, `gusakuza`, in the `generate_challenge` function.
-    -   [ ] Implement the "sakwe sakwe" -> "soma" interaction flow. This might require a new endpoint or state management to handle the multi-step nature of the game.
+-   [x] **Task 1.2: Backend - New Game Mode Logic:**
+    -   [x] Add a new challenge type, `gusakuza`, in the `generate_challenge` function.
+    -   [x] Implement the "sakwe sakwe" -> "soma" interaction flow. This might require a new endpoint or state management to handle the multi-step nature of the game.
 
--   [ ] **Task 1.3: Frontend - UI for "Gusakuza" Game:**
-    -   [ ] Create a new UI section or modify the existing one to handle the "Gusakuza" game.
-    -   [ ] Display the "sakwe sakwe" prompt from the AI.
-    -   [ ] Add a button or input for the user to respond with "soma".
-    -   [ ] Display the riddle from the AI.
-    -   [ ] Allow the user to input their answer to the riddle.
+-   [x] **Task 1.3: Frontend - UI for "Gusakuza" Game:**
+    -   [x] Create a new UI section or modify the existing one to handle the "Gusakuza" game.
+    -   [x] Display the "sakwe sakwe" prompt from the AI.
+    -   [x] Add a button or input for the user to respond with "soma".
+    -   [x] Display the riddle from the AI.
+    -   [x] Allow the user to input their answer to the riddle.
 
--   [ ] **Task 1.4: Backend - Evaluate Riddle Answer:**
-    -   [ ] Use the AI to evaluate the user's answer to the riddle.
-    -   [ ] Update the score and lives based on the result.
+-   [x] **Task 1.4: Backend - Evaluate Riddle Answer:**
+    -   [x] Use the AI to evaluate the user's answer to the riddle.
+    -   [x] Update the score and lives based on the result.
 
 ## Feature 2: Live Audio Chat
 

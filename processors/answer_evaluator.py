@@ -2,9 +2,14 @@ import logging
 import os
 from typing import TypedDict
 
+from genai_processors import processor
 from genai_processors.core import genai_model
 from genai_processors import streams
 from genai_processors.content_api import ProcessorPart
+import json
+import logging
+import os
+from typing import TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +20,7 @@ class AnswerEvaluationInput(TypedDict):
     challenge_type: str
 
 
-class AnswerEvaluatorProcessor:
+class AnswerEvaluatorProcessor(processor.Processor):
     def __init__(self, model_name: str):
         # Define the prompt template for the language evaluation
         self.prompt = (
@@ -29,40 +34,92 @@ class AnswerEvaluatorProcessor:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found in environment variables.")
-        self.processor = genai_model.GenaiModel(model_name=model_name, api_key=api_key)
+        self.model = genai_model.GenaiModel(model_name=model_name, api_key=api_key)
 
-    async def evaluate_answer(
-        self, user_answer: str, target_text: str, challenge_type: str
-    ) -> bool:
-        """Evaluates a user's answer using the Gemini processor."""
-        # For riddles, the answer must be exact for cultural accuracy
-        if challenge_type == "gusakuza":
-            return user_answer.lower().strip() == target_text.lower().strip()
-
+    async def call(
+        self,
+        input_stream: streams.AsyncIterable[ProcessorPart]
+    ) -> streams.AsyncIterable[ProcessorPart]:
+        """
+        Processes the input stream to evaluate the user's answer.
+        Expects a JSON string with 'user_answer', 'target_text', and 'challenge_type'.
+        """
+        input_json = ""
+        async for part in input_stream:
+            if part.text:
+                input_json += part.text
+        
         try:
+            input_data = json.loads(input_json)
+            user_answer = input_data["user_answer"]
+            target_text = input_data["target_text"]
+            challenge_type = input_data["challenge_type"]
+
+            # For riddles, the answer must be exact for cultural accuracy
+            if challenge_type == "gusakuza":
+                is_correct = user_answer.lower().strip() == target_text.lower().strip()
+                yield ProcessorPart(text=json.dumps({"is_correct": is_correct}))
+                return
+
             # Create the input dictionary for the prompt
-            input_data = AnswerEvaluationInput(
+            prompt_input = AnswerEvaluationInput(
                 user_answer=user_answer,
                 target_text=target_text,
                 challenge_type=challenge_type,
             )
             
             # Log the request
-            formatted_prompt = self.prompt.format(**input_data)
+            formatted_prompt = self.prompt.format(**prompt_input)
             logger.info(f"--- GenAI-Processor REQUEST ---\nPROMPT: {formatted_prompt}\n")
 
             # Asynchronously process the input to get the model's response
             response = ""
-            input_stream = streams.stream_content([ProcessorPart(text=formatted_prompt)])
-            async for part in self.processor(input_stream):
-                response += part.text
+            model_input_stream = streams.stream_content([ProcessorPart(text=formatted_prompt)])
+            async for part in self.model(model_input_stream):
+                if part.text:
+                    response += part.text
             
             # Log the response
             logger.info(f"--- GenAI-Processor RESPONSE ---\nRESPONSE: {response}\n")
 
-            # The response from the processor is the raw text
-            return response.strip().lower() == "correct"
+            is_correct = response.strip().lower() == "correct"
+            yield ProcessorPart(text=json.dumps({"is_correct": is_correct}))
+
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Error processing input for evaluation: {e}")
+            yield ProcessorPart(text=json.dumps({"error": "Invalid input format."}))
         except Exception as e:
             logger.error(f"Error evaluating answer with processor: {e}")
             # Fallback to simple string matching in case of an API error
-            return user_answer.lower().strip() == target_text.lower().strip()
+            is_correct = user_answer.lower().strip() == target_text.lower().strip()
+            yield ProcessorPart(text=json.dumps({"is_correct": is_correct, "fallback": True}))
+
+    async def evaluate_answer(
+        self,
+        user_answer: str,
+        target_text: str,
+        challenge_type: str
+    ) -> bool:
+        """
+        Evaluates a user's answer using the Gemini processor.
+        This is a convenience wrapper around the chain.
+        """
+        input_json = json.dumps({
+            "user_answer": user_answer,
+            "target_text": target_text,
+            "challenge_type": challenge_type,
+        })
+        
+        response_json = ""
+        input_stream = streams.stream_content([ProcessorPart(text=input_json)])
+        async for part in self(input_stream):
+            if part.text:
+                response_json += part.text
+        
+        try:
+            response_data = json.loads(response_json)
+            return response_data.get("is_correct", False)
+        except json.JSONDecodeError:
+            logger.error("Failed to decode JSON response from evaluation chain.")
+            return False
+

@@ -3,9 +3,10 @@ import json
 import random
 import re
 import logging
-from typing import TypedDict, Any, Dict
+from typing import TypedDict, Any, Dict, AsyncIterator
 
 from PIL import Image
+from genai_processors import processor
 from genai_processors.core import genai_model
 from genai_processors import streams
 from genai_processors.content_api import ProcessorPart
@@ -23,7 +24,7 @@ class ChallengeInput(TypedDict):
     story_chapter_text: str
 
 
-class ChallengeGeneratorProcessor:
+class ChallengeGeneratorProcessor(processor.Processor):
     def __init__(self, model_name: str, image_dir: str = "sampleimg"):
         self.model_name = model_name
         self.image_dir = image_dir
@@ -56,7 +57,7 @@ class ChallengeGeneratorProcessor:
             ),
             "kin_to_eng_proverb": (
                 "Provide a {{level}} Kinyarwanda proverb and its English translation, separated by a pipe (|). "
-                "Example: 'Akabando k'iminsi gacibwa kare|A walking stick for old age is prepared in advance'. No other text."
+                "Example: 'Akabando k\'iminsi gacibwa kare|A walking stick for old age is prepared in advance'. No other text."
             ),
             "eng_to_kin_phrase": (
                 "Provide a simple {{level}} English phrase and its Kinyarwanda translation, separated by a pipe (|). "
@@ -84,7 +85,7 @@ class ChallengeGeneratorProcessor:
         elif game_mode == "image":
             return {"challenge_type": "image_description", "source_text": "/sampleimg/Rw1.jpg", "target_text": "A beautiful Rwandan landscape.", "context": "This is a fallback image challenge."}
         else:
-            return {"challenge_type": "kin_to_eng_proverb", "source_text": "Akabando k'iminsi gacibwa kare", "target_text": "A walking stick for old age is prepared in advance", "context": "Translate this Kinyarwanda proverb to English."}
+            return {"challenge_type": "kin_to_eng_proverb", "source_text": "Akabando k\'iminsi gacibwa kare", "target_text": "A walking stick for old age is prepared in advance", "context": "Translate this Kinyarwanda proverb to English."}
 
     async def _run_processor(self, processor_input: Dict[str, Any], prompt_key: str) -> str:
         prompt = self.prompts[prompt_key]
@@ -94,16 +95,42 @@ class ChallengeGeneratorProcessor:
         logger.info(f"\n--- GenAI-Processor REQUEST ---\nPROMPT: {log_prompt}\n")
         try:
             response = ""
-            input_stream = streams.stream_content([ProcessorPart(text=log_prompt)])
+            # Handle image input for the model
+            parts = [ProcessorPart(text=log_prompt)]
+            if "image" in processor_input:
+                parts.append(ProcessorPart(image=processor_input["image"]))
+            
+            input_stream = streams.stream_content(parts)
             async for part in processor(input_stream):
-                response += part.text
+                if part.text:
+                    response += part.text
             logger.info(f"\n--- GenAI-Processor RESPONSE ---\nRESPONSE: {response}\n")
             return response
         except Exception as e:
             logger.error(f"GenAI Processor call failed: {e}")
             return ""
 
-    async def generate_challenge(self, difficulty: int, state: GameState, game_mode: str) -> dict:
+    async def call(self, input_stream: streams.AsyncIterable[ProcessorPart]) -> streams.AsyncIterable[ProcessorPart]:
+        input_json = ""
+        async for part in input_stream:
+            if part.text:
+                input_json += part.text
+        
+        try:
+            input_data = json.loads(input_json)
+            difficulty = input_data["difficulty"]
+            state_dict = input_data["state"]
+            state = GameState(**state_dict)
+            game_mode = input_data["game_mode"]
+
+            challenge_data = await self._generate_challenge_logic(difficulty, state, game_mode)
+            yield ProcessorPart(text=json.dumps(challenge_data))
+
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Error processing input for challenge generation: {e}")
+            yield ProcessorPart(text=json.dumps({"error": "Invalid input format."}))
+
+    async def _generate_challenge_logic(self, difficulty: int, state: GameState, game_mode: str) -> dict:
         try:
             level = {1: "beginner", 2: "intermediate", 3: "advanced"}.get(difficulty, "intermediate")
             context = None
@@ -189,3 +216,27 @@ class ChallengeGeneratorProcessor:
         except Exception as e:
             logger.error(f"Error generating challenge: {e}", exc_info=True)
             return await self._generate_static_challenge(game_mode)
+
+    async def generate_challenge(self, difficulty: int, state: GameState, game_mode: str) -> dict:
+        """
+        Generates a challenge. Convenience wrapper around the processor chain.
+        """
+        input_data = {
+            "difficulty": difficulty,
+            "state": state.dict(),
+            "game_mode": game_mode,
+        }
+        input_json = json.dumps(input_data)
+        
+        response_json = ""
+        input_stream = streams.stream_content([ProcessorPart(text=input_json)])
+        async for part in self(input_stream):
+            if part.text:
+                response_json += part.text
+        
+        try:
+            return json.loads(response_json)
+        except json.JSONDecodeError:
+            logger.error("Failed to decode JSON response from challenge generation chain.")
+            return await self._generate_static_challenge(game_mode)
+
