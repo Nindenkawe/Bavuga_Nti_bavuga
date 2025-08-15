@@ -1,22 +1,30 @@
 # Welcome to the Bavuga Ntibavuga Developer's Guide
 
-Welcome to this guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. designed to showcase what we have been learning in the **Build with Ai** organised by **GDG Kigali**. 
+Welcome to the guide for **Bavuga Ntibavuga**, a dynamic Kinyarwanda language game powered by Google's Generative AI. This project showcases a modern, modular application structure and the power of Gemini for creative, multimodal interactions.
 
-This guide will show you the aproach i took in making this game web app with a local context at its core. I'll show you how to get the app running and, more importantly, pull back the curtain to reveal how the magic works.
+This guide will walk you through the project's architecture, explaining how to get the app running and how its core components work together.
+
+### The Core Architecture: Processors
+
+The application's logic is no longer in a single file but is organized into a `processors` directory. This makes the code cleaner, more modular, and easier to maintain.
+
+*   `ChallengeGeneratorProcessor`: The creative heart of the game. It crafts the prompts for each game mode (Story, Riddles, etc.) and gets the challenges from the Gemini API.
+*   `AnswerEvaluatorProcessor`: The judge. It takes the user's answer and asks Gemini to evaluate if it's correct.
+*   `Audio Processors`: A set of speech-to-text and text-to-speech processors that handle all voice interactions, powered by Gemini in dev mode.
 
 ### Choose Your Mode
 
-You have two paths for running this application. Choose the one that fits your goal:
+You have two paths for running this application:
 
-1.  **Path A: The Gemini Dev Mode**
-    *   **Goal:** Quickly test the UI, game logic, and even live audio transcription.
+1.  **Path A: The Gemini Dev Mode (Recommended for Quick Start)**
+    *   **Goal:** Quickly test the UI, game logic, and live audio features.
     *   **Requirements:** Only a `GEMINI_API_KEY`.
-    *   **Features:** Uses the powerful multimodal Gemini API for game logic and speech-to-text, with a simple JSON file for a database. No Docker, no billing required.
+    *   **Features:** Uses the powerful multimodal Gemini API for **everything**: game logic, live speech-to-text, and text-to-speech. It uses a simple JSON file for the riddle database. No Docker or billing is required.
 
 2.  **Path B: The Full Production Mode**
     *   **Goal:** Deploy the complete, production-ready application.
     *   **Requirements:** Docker, a billing-enabled Google Cloud project, and API keys.
-    *   **Features:** Uses dedicated, high-performance Google Cloud APIs for audio and a robust MongoDB database, all managed by Docker.
+    *   **Features:** Uses a robust MongoDB database and is containerized with Docker for easy deployment. While architected to use dedicated Google Cloud services for audio, it currently uses the Gemini audio processors as a reliable fallback.
 
 Ready? Let's begin!
 
@@ -41,13 +49,16 @@ MONGODB_URI="mongodb://database:27017"
 
 # The name of the database to use.
 DATABASE_NAME="language_app"
+
+# Your Google Cloud Project ID (for the production setup script)
+GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
 ```
 
 -----
 
 ## 2. Path A: The Gemini-Powered Dev Mode
 
-This is your playground for rapid development. You'll be amazed at what you can do with just a Gemini API key.
+This is your playground for rapid development. You get the full-featured experience, including audio, with minimal setup.
 
 ### Your Mission:
 
@@ -58,7 +69,7 @@ This is your playground for rapid development. You'll be amazed at what you can 
     ```
 
 2.  **Launch the App:**
-    Our `run.sh` script makes this easy. The `--dev` flag activates this special mode.
+    Our `start.sh` script makes this easy. The `--dev` flag activates this special mode.
     ```bash
     # Make the script executable (you only need to do this once)
     chmod +x start.sh
@@ -70,23 +81,21 @@ This is your playground for rapid development. You'll be amazed at what you can 
     ./start.sh --dev --debug
     ```
 
-Your local server is now running at `http://localhost:2500`. You can now use the microphone in the app to speak your answers!
+Your local server is now running at `http://localhost:2500`. You can now use the microphone to speak your answers and hear the AI's responses.
 
-**How it Works:** In this mode, the app sends your recorded audio directly to the Gemini API for transcription. It's a live demonstration of multimodal AI in action!
-
-**Note:** The Text-to-Speech feature is disabled in this mode because the Gemini API generates text, not audio. The app will function perfectly, but you won't hear the answers spoken back.
+**How it Works:** In this mode, the application's `APIRouter` receives requests and delegates tasks to the appropriate processor. The `GameProcessor` uses the `ChallengeGeneratorProcessor` to create challenges and the `AnswerEvaluatorProcessor` to grade them. For audio, the `websocket_routes` stream audio to the `GeminiSpeechToTextProcessor` and get spoken responses from the `GeminiTextToSpeechProcessor`.
 
 -----
 
 ## 3. Path B: The Full Production Experience with Docker
 
-This path gives you a full, production-grade deployment using dedicated, high-performance Google Cloud services.
+This path gives you a full, production-grade deployment using dedicated services.
 
 ### Your Mission:
 
 1.  **Prerequisites:**
     *   You must have **Docker** and **Docker Compose** installed.
-    *   You need a **Google Cloud project with billing enabled** to use the dedicated audio APIs.
+    *   You need a **Google Cloud project with billing enabled**.
 
 2.  **Automated Cloud Setup:**
     We've created a script to handle the tedious parts of cloud setup.
@@ -100,7 +109,7 @@ This path gives you a full, production-grade deployment using dedicated, high-pe
     This script enables the correct APIs and creates a `google-credentials.json` file that your Docker container will use to authenticate.
 
 3.  **Launch with Docker Compose:**
-    This single command builds and runs your entire application stack.
+    This single command builds and runs your entire application stack (FastAPI app + MongoDB).
     ```bash
     docker-compose up --build -d
     ```
@@ -108,109 +117,49 @@ This path gives you a full, production-grade deployment using dedicated, high-pe
 
 -----
 
-## 4. Understanding the Magic: How Gemini Powers Each Game Mode
+## 4. Understanding the Magic: A Look Inside the Processors
 
-This application is more than just a game; it's a practical demonstration of how to creatively interact with a powerful Large Language Model (LLM) like Gemini. By sending the model different types of data and instructions (a process called **grounding**), we can shape its output to create diverse and engaging experiences.
-
-Let's explore how each game mode uses Gemini in a unique way.
+The magic of the game lies in how we instruct the Gemini model. This is handled entirely within the **processors**.
 
 ---
 
-### **Story Mode: The Narrator**
+### `ChallengeGeneratorProcessor`: The Creative Director
 
-*   **The Goal:** Create an immersive, narrative-driven experience where each challenge is part of an unfolding story.
-*   **The Logic:** This mode showcases Gemini's ability to generate structured, creative content.
-    1.  **Story Generation:** If no story exists, we ask Gemini to become a storyteller. We send a detailed prompt asking for a short story, broken into chapters, and formatted as a JSON object.
-    2.  **Challenge Generation:** For each challenge, we provide Gemini with the current chapter of the story and ask it to create a translation challenge based on the chapter's content.
-*   **Data Structures:**
-    *   **Input for Story:** A detailed text prompt describing the desired story structure and format (JSON).
-    *   **Output for Story:** A JSON object containing the story's title and a list of chapters.
-    *   **Input for Challenge:** A text prompt that includes a chapter of the story as context.
-*   **Code Snippet (`main.py`):**
-    ```python
-    # Story Generation Prompt
-    story_prompt = "Write a short, engaging story for a language learning game... The output should be a JSON object with a 'title' and a list of 'chapters'..."
-    
-    # Challenge Generation Prompt
-    prompt = f"Based on this chapter of a story: '{chapter_text}', create a language challenge... in the format 'English phrase|Kinyarwanda translation'."
-    ```
+This processor is responsible for creating the content for every game mode. It uses different prompting strategies to get the desired output from Gemini.
+
+*   **Story Mode:** It prompts Gemini to act as a storyteller, requesting a short story formatted as a JSON object. It then uses individual chapters of that story as context to generate new challenges.
+*   **BavugaNtiBavuga Mode:** It uses a simple, direct prompt asking Gemini for a phrase and its Kinyarwanda translation.
+*   **Sakwe Sakwe Mode (Riddles):** This demonstrates **Retrieval-Augmented Generation (RAG)**. The processor first reads real Kinyarwanda riddles from `riddles.json`. It then includes these examples in the prompt, guiding Gemini to generate a new, authentic-sounding riddle. This is also known as **few-shot prompting**.
+*   **Image Mode:** This showcases Gemini's **multimodal** capabilities. The processor sends both an image file and a text prompt to the model, asking it to describe the image in two languages.
 
 ---
 
-### **BavugaNtiBavuga Mode: The Translator**
+### `AnswerEvaluatorProcessor`: The Grader
 
-*   **The Goal:** Generate classic translation challenges, like translating proverbs or common phrases.
-*   **The Logic:** This is the most direct use of Gemini's translation capabilities. We provide a simple instruction and let the model do the work.
-*   **Data Structures:**
-    *   **Input:** A simple text prompt asking for a phrase and its translation, separated by a pipe (`|`).
-    *   **Output:** A single string containing the two translated phrases.
-*   **Code Snippet (`main.py`):**
-    ```python
-    prompt = f"Provide a simple {level} English phrase and its Kinyarwanda translation, separated by a pipe (|). Example: 'Good morning|Mwaramutse'."
-    ```
+This processor determines if a user's answer is correct. It sends a prompt to Gemini that includes the original challenge, the correct answer, and the user's submitted answer, and asks for a "Correct" or "Incorrect" judgment.
 
 ---
 
-### **Sakwe Sakwe Mode: The Cultural Expert**
+### Audio Processors (`stt_processor` & `tts_processor`)
 
-*   **The Goal:** Create challenges based on traditional Kinyarwanda riddles (Ibisakuzo).
-*   **The Logic:** This mode demonstrates a powerful technique called **Retrieval-Augmented Generation (RAG)**. We don't just ask Gemini to generate a riddle; we give it examples from our `riddles.json` file to ensure the riddles are authentic and culturally relevant. This is also known as **few-shot prompting**.
-*   **Data Structures:**
-    *   **Input:** A text prompt that includes several examples of real riddles and their answers.
-    *   **Output:** A new riddle and answer that mimics the style and structure of the examples.
-*   **Code Snippet (`main.py`):**
-    ```python
-    # The prompt is augmented with examples from the riddles.json file
-    prompt = "Generate a Kinyarwanda riddle (igisakuzo)... Here are some examples:
-" + example_text
-    ```
+These processors, defined in `processors/audio.py`, handle all voice interactions.
 
----
-
-### **Image Mode: The Artist & Interpreter**
-
-*   **The Goal:** Create challenges based on describing an image.
-*   **The Logic:** This mode uses Gemini's **multimodal** capabilities, meaning it can understand both text and images.
-    1.  We send the model an image file from our local directory.
-    2.  We also send a text prompt asking the model to describe the image in both Kinyarwanda and English.
-*   **Data Structures:**
-    *   **Input:** A list containing both a text prompt and an image file. This is a key concept in multimodality.
-    *   **Output:** A text string with the Kinyarwanda and English descriptions.
-*   **Code Snippet (`main.py`):**
-    ```python
-    prompt = [
-        "Describe this image of Rwanda in a single, descriptive sentence...",
-        img, # The PIL Image object
-    ]
-    ```
-
----
-
-### **Multimodality in Dev Mode: The Transcriber**
-
-In the Gemini Dev Mode, we also use multimodality for audio transcription.
-
-*   **How it works:** The application sends the recorded audio file directly to the Gemini API and asks it to transcribe the audio into text.
-*   **Data Structures:**
-    *   **Input:** A list containing a text prompt ("Transcribe this Kinyarwanda audio:") and the audio data.
-*   **Code Snippet (`main.py`):**
-    ```python
-    response = await model.generate_content_async(["Transcribe this Kinyarwanda audio:", audio_blob])
-    ```
+*   **Speech-to-Text (`stt_processor`):** In dev mode, this is a `GeminiSpeechToTextProcessor`. The application streams audio from the user's microphone over a WebSocket connection directly to this processor, which uses the Gemini API to get a live transcription.
+*   **Text-to-Speech (`tts_processor`):** This is a `GeminiTextToSpeechProcessor`. When the AI needs to speak, the application sends the text to this processor, which returns audio data that can be played in the browser.
 
 -----
 
 ## 5. Troubleshooting Common Issues
 
-*   **`ModuleNotFoundError: No module named 'google.generativeai'`**
+*   **`ModuleNotFoundError`:**
     *   **Solution:** You forgot to install the dependencies! Run `pip install -r requirements.txt`.
 
-*   **`503 Service Unavailable` for `/get_challenge`**
+*   **`503 Service Unavailable` or Errors on `/get_challenge`:**
     *   **Solution:** This usually means your `GEMINI_API_KEY` is missing or invalid. Double-check your `.env` file.
 
-*   **Audio buttons are disabled in Production Mode.**
-    *   **Solution:** This means the dedicated audio APIs failed to initialize. Make sure you have run the `./setup_gcloud.sh` script and that billing is enabled on your Google Cloud project.
+*   **Audio buttons don't work:**
+    *   **Solution:** This could be a browser permission issue (make sure you've allowed microphone access) or an invalid Gemini API key. Check the browser's developer console and the application logs for errors.
 
 -----
 
-Thank you for following this guide. We can't wait to see what you create. Happy coding!
+Thank you for following this guide. Happy coding!
