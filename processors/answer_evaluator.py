@@ -1,8 +1,10 @@
 import logging
+import os
 from typing import TypedDict
 
 from genai_processors.core import genai_model
 from genai_processors import streams
+from genai_processors.content_api import ProcessorPart
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,10 @@ class AnswerEvaluatorProcessor:
             "Respond ONLY with 'Correct' or 'Incorrect'."
         )
         # Initialize the Gemini processor
-        self.processor = genai_model.GenaiModel(model_name=model_name, prompt_template=self.prompt, temperature=0.1)
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment variables.")
+        self.processor = genai_model.GenaiModel(model_name=model_name, api_key=api_key)
 
     async def evaluate_answer(
         self, user_answer: str, target_text: str, challenge_type: str
@@ -43,11 +48,12 @@ class AnswerEvaluatorProcessor:
             )
             
             # Log the request
-            logger.info(f"--- GenAI-Processor REQUEST ---\nPROMPT: {self.prompt.format(**input_data)}\n")
+            formatted_prompt = self.prompt.format(**input_data)
+            logger.info(f"--- GenAI-Processor REQUEST ---\nPROMPT: {formatted_prompt}\n")
 
             # Asynchronously process the input to get the model's response
             response = ""
-            input_stream = streams.stream_content([input_data])
+            input_stream = streams.stream_content([ProcessorPart(text=formatted_prompt)])
             async for part in self.processor(input_stream):
                 response += part.text
             

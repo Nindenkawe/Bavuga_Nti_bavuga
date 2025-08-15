@@ -8,6 +8,7 @@ from typing import TypedDict, Any, Dict
 from PIL import Image
 from genai_processors.core import genai_model
 from genai_processors import streams
+from genai_processors.content_api import ProcessorPart
 
 from db_logic import GameState
 
@@ -27,6 +28,10 @@ class ChallengeGeneratorProcessor:
         self.model_name = model_name
         self.image_dir = image_dir
         self.ibisakuzo_examples = self._load_riddles()
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment variables.")
+        self.api_key = api_key
 
         # --- Prompt Definitions ---
         self.prompts = {
@@ -83,13 +88,13 @@ class ChallengeGeneratorProcessor:
 
     async def _run_processor(self, processor_input: Dict[str, Any], prompt_key: str) -> str:
         prompt = self.prompts[prompt_key]
-        processor = genai_model.GenaiModel(self.model_name, prompt_template=prompt)
+        processor = genai_model.GenaiModel(model_name=self.model_name, api_key=self.api_key)
         log_prompt = prompt.format(**processor_input)
         
         logger.info(f"\n--- GenAI-Processor REQUEST ---\nPROMPT: {log_prompt}\n")
         try:
             response = ""
-            input_stream = streams.stream_content([processor_input])
+            input_stream = streams.stream_content([ProcessorPart(text=log_prompt)])
             async for part in processor(input_stream):
                 response += part.text
             logger.info(f"\n--- GenAI-Processor RESPONSE ---\nRESPONSE: {response}\n")
