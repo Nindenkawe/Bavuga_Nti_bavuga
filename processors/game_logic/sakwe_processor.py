@@ -35,12 +35,12 @@ class SakweProcessor(processor.Processor):
 
     async def _process_audio(self, audio_data: bytes) -> str:
         """Converts audio to text using the STT processor."""
-        transcript_parts = await processor.apply_async(self.stt, [content_api.ProcessorPart(audio=audio_data)])
+        transcript_parts = await processor.apply_async(self.stt, [content_api.ProcessorPart(audio_data, mimetype="audio/mpeg")])
         return "".join(part.text for part in transcript_parts if part.text).lower().strip()
 
     async def speak(self, text: str):
         """Sends text to the TTS processor to be spoken to the user."""
-        async for part in self.tts(streams.stream_content([text])):
+        async for part in self.tts(streams.stream_content([content_api.ProcessorPart(text)])):
             if part.audio:
                 await self.output_queue.put(part)
 

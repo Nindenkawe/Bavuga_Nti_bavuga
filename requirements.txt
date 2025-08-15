@@ -1,6 +1,8 @@
 # Core web framework
 fastapi
 uvicorn[standard]
+starlette
+itsdangerous
 
 # AI and Google Cloud
 google-generativeai

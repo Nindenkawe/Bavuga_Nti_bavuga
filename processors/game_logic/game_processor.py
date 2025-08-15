@@ -30,21 +30,21 @@ class GameProcessor(processor.Processor):
 
             if action == "get_challenge":
                 # Pass the entire dictionary to the challenge generator
-                chain_input_stream = streams.stream_content([ProcessorPart(text=json.dumps(input_data))])
+                chain_input_stream = streams.stream_content([ProcessorPart(json.dumps(input_data))])
                 async for part in self.challenge_generator(chain_input_stream):
                     yield part
             
             elif action == "evaluate_answer":
                 # Pass the entire dictionary to the answer evaluator
-                chain_input_stream = streams.stream_content([ProcessorPart(text=json.dumps(input_data))])
+                chain_input_stream = streams.stream_content([ProcessorPart(json.dumps(input_data))])
                 async for part in self.answer_evaluator(chain_input_stream):
                     yield part
             
             else:
                 error_message = json.dumps({"error": "Invalid action specified."})
-                yield ProcessorPart(text=error_message)
+                yield ProcessorPart(error_message)
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Error processing game logic request: {e}")
             error_message = json.dumps({"error": "Invalid input format for game processor."})
-            yield ProcessorPart(text=error_message)
+            yield ProcessorPart(error_message)

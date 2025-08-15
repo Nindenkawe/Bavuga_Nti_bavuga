@@ -39,7 +39,7 @@ def create_gemini_speech_to_text_processor(model_name: str) -> Processor:
     async def gemini_audio_to_text(part: ProcessorPart) -> AsyncGenerator[ProcessorPart, None]:
         if part.audio:
             logger.info("DEV MODE (STT): Simulating Gemini speech-to-text.")
-            yield ProcessorPart(text="simulated speech to text")
+            yield ProcessorPart("simulated speech to text")
     return gemini_audio_to_text
 
 def create_gemini_text_to_speech_processor(model_name: str) -> Processor:
@@ -50,7 +50,7 @@ def create_gemini_text_to_speech_processor(model_name: str) -> Processor:
     async def gemini_text_to_audio(part: ProcessorPart) -> AsyncGenerator[ProcessorPart, None]:
         if part.text:
             logger.info(f"DEV MODE (TTS): Simulating Gemini text-to-speech for: {part.text}")
-            yield ProcessorPart(audio=content_api.Audio(data=b"simulated audio data"))
+            yield ProcessorPart(b"simulated audio data", mimetype="audio/mpeg")
     return log_and_pass + gemini_text_to_audio
 
 

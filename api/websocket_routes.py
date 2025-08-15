@@ -27,7 +27,7 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             while True:
                 audio_data = await websocket.receive_bytes()
-                input_queue.put_nowait(content_api.ProcessorPart(audio=audio_data))
+                input_queue.put_nowait(content_api.ProcessorPart(audio_data, mimetype="audio/webm"))
         except WebSocketDisconnect:
             print("Client disconnected from Sakwe endpoint.")
 

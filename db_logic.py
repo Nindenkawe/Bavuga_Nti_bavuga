@@ -209,28 +209,24 @@ async def save_submission_dev(submission_data: Submission) -> ObjectId:
     logger.info(f"Saved submission with ID: {new_id} for challenge ID: {submission_data.challenge_id} in dev db")
     return new_id
 
-async def get_total_score_dev() -> int:
-    await asyncio.sleep(0.01) # Simulate async
-    db_data = _read_dev_db()
-    return sum(s.get("score", 0) for s in db_data["submissions"])
 
-async def get_game_state_dev() -> GameState:
-    await asyncio.sleep(0.01) # Simulate async
-    db_data = _read_dev_db()
-    state_data = db_data["game_state"][0]
-    # Pydantic model expects `_id` at the top level, not inside a dict
-    state_data_copy = state_data.copy()
-    state_data_copy["_id"] = state_data_copy["_id"]["$oid"]
-    return GameState(**state_data_copy)
 
-async def update_game_state_dev(state: GameState):
-    await asyncio.sleep(0.01) # Simulate async
-    db_data = _read_dev_db()
-    state_dict = state.model_dump(exclude={"id", "state_name"})
-    # Update the global state in our JSON db
-    db_data["game_state"][0].update(state_dict)
-    _write_dev_db(db_data)
-    logger.info(f"Updated game state in dev db: Lives={state.lives}, Score={state.score}")
+async def get_game_state(session: dict) -> GameState:
+    """Retrieves the current game state from the session, creating it if it doesn't exist."""
+    if "game_state" not in session:
+        logger.info("No game state found in session, creating a default one.")
+        session["game_state"] = GameState().model_dump(by_alias=True)
+    
+    # Ensure the loaded state is a GameState object
+    state_data = session["game_state"]
+    if isinstance(state_data, dict):
+        return GameState(**state_data)
+    return state_data
+
+async def update_game_state(session: dict, state: GameState):
+    """Updates the game state in the session."""
+    session["game_state"] = state.model_dump(by_alias=True)
+    logger.info(f"Updated game state in session: Lives={state.lives}, Score={state.score}")
 
 
 # --- Unified Database Operations ---
@@ -275,42 +271,11 @@ async def save_submission(submission_data: Submission) -> ObjectId:
     logger.info(f"Saved submission with ID: {result.inserted_id} for challenge ID: {submission_data.challenge_id}")
     return result.inserted_id
 
-async def get_total_score() -> int:
-    """Calculates the total score across all submissions."""
-    if DEV_MODE:
-        return await get_total_score_dev()
-    database = get_database()
-    pipeline = [
-        {"$group": {"_id": None, "totalScore": {"$sum": "$score"}}}
-    ]
-    result = await database["submissions"].aggregate(pipeline).to_list(length=1)
-    return result[0]["totalScore"] if result else 0
 
-async def get_game_state() -> GameState:
-    """Retrieves the current game state, creating it if it doesn't exist."""
-    if DEV_MODE:
-        return await get_game_state_dev()
-    database = get_database()
-    state_data = await database["game_state"].find_one({"state_name": "global"})
-    if state_data:
-        return GameState(**state_data)
-    else:
-        logger.info("No game state found, creating a default one.")
-        default_state = GameState()
-        await database["game_state"].insert_one(default_state.model_dump(by_alias=True, exclude_none=True))
-        return default_state
 
-async def update_game_state(state: GameState):
-    """Updates the game state in the database."""
-    if DEV_MODE:
-        return await update_game_state_dev(state)
-    database = get_database()
-    await database["game_state"].update_one(
-        {"state_name": "global"},
-        {"$set": state.model_dump(exclude={"id", "state_name"})},
-        upsert=True
-    )
-    logger.info(f"Updated game state: Lives={state.lives}, Score={state.score}")
+
+
+
 
 async def get_recent_challenge_texts(limit: int = 20) -> list[str]:
     """Fetches the text of recent translation challenges to avoid repetition."""

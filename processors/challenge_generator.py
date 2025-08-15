@@ -25,8 +25,8 @@ class ChallengeInput(TypedDict):
 
 
 class ChallengeGeneratorProcessor(processor.Processor):
-    def __init__(self, model_name: str, image_dir: str = "sampleimg"):
-        self.model_name = model_name
+    def __init__(self, model_names: list[str], image_dir: str = "sampleimg"):
+        self.model_names = model_names
         self.image_dir = image_dir
         self.ibisakuzo_examples = self._load_riddles()
         api_key = os.getenv("GEMINI_API_KEY")
@@ -43,24 +43,24 @@ class ChallengeGeneratorProcessor(processor.Processor):
                 "Do not add any other text, titles, or formatting."
             ),
             "story_translation": (
-                "Based on this story chapter: '{{story_chapter_text}}', create a language challenge. "
+                "Based on this story chapter: '{story_chapter_text}', create a language challenge. "
                 "It should be a phrase from the story to translate from English to Kinyarwanda. "
                 "Output as 'English phrase|Kinyarwanda translation'. No other text."
             ),
             "themed_sentence": (
-                "Provide a simple English phrase using the word '{{thematic_word}}'. "
+                "Provide a simple English phrase using the word '{thematic_word}'. "
                 "Example: 'The honey is sweet'. No other text."
             ),
             "translate_to_kinyarwanda": (
-                "Translate the following English phrase to Kinyarwanda: '{{english_phrase}}'. "
+                "Translate the following English phrase to Kinyarwanda: '{english_phrase}'. "
                 "Only output the Kinyarwanda translation. No other text."
             ),
             "kin_to_eng_proverb": (
-                "Provide a {{level}} Kinyarwanda proverb and its English translation, separated by a pipe (|). "
+                "Provide a {level} Kinyarwanda proverb and its English translation, separated by a pipe (|). "
                 "Example: 'Akabando k\'iminsi gacibwa kare|A walking stick for old age is prepared in advance'. No other text."
             ),
             "eng_to_kin_phrase": (
-                "Provide a simple {{level}} English phrase and its Kinyarwanda translation, separated by a pipe (|). "
+                "Provide a simple {level} English phrase and its Kinyarwanda translation, separated by a pipe (|). "
                 "Example: 'Good morning|Mwaramutse'. No other text."
             ),
             "image_description": (
@@ -89,26 +89,30 @@ class ChallengeGeneratorProcessor(processor.Processor):
 
     async def _run_processor(self, processor_input: Dict[str, Any], prompt_key: str) -> str:
         prompt = self.prompts[prompt_key]
-        processor = genai_model.GenaiModel(model_name=self.model_name, api_key=self.api_key)
         log_prompt = prompt.format(**processor_input)
-        
         logger.info(f"\n--- GenAI-Processor REQUEST ---\nPROMPT: {log_prompt}\n")
-        try:
-            response = ""
-            # Handle image input for the model
-            parts = [ProcessorPart(text=log_prompt)]
-            if "image" in processor_input:
-                parts.append(ProcessorPart(image=processor_input["image"]))
-            
-            input_stream = streams.stream_content(parts)
-            async for part in processor(input_stream):
-                if part.text:
-                    response += part.text
-            logger.info(f"\n--- GenAI-Processor RESPONSE ---\nRESPONSE: {response}\n")
-            return response
-        except Exception as e:
-            logger.error(f"GenAI Processor call failed: {e}")
-            return ""
+
+        for model_name in self.model_names:
+            try:
+                processor = genai_model.GenaiModel(model_name=model_name, api_key=self.api_key)
+                response = ""
+                # Handle image input for the model
+                parts = [ProcessorPart(log_prompt)]
+                if "image" in processor_input:
+                    parts.append(ProcessorPart(processor_input["image"]))
+                
+                input_stream = streams.stream_content(parts)
+                async for part in processor(input_stream):
+                    if part.text:
+                        response += part.text
+                logger.info(f"\n--- GenAI-Processor RESPONSE (model: {model_name}) ---\nRESPONSE: {response}\n")
+                return response
+            except Exception as e:
+                logger.info(f"GenAI Processor call failed for model {model_name}: {e}")
+                continue
+        
+        logger.error("All models failed.")
+        return ""
 
     async def call(self, input_stream: streams.AsyncIterable[ProcessorPart]) -> streams.AsyncIterable[ProcessorPart]:
         input_json = ""
@@ -124,11 +128,11 @@ class ChallengeGeneratorProcessor(processor.Processor):
             game_mode = input_data["game_mode"]
 
             challenge_data = await self._generate_challenge_logic(difficulty, state, game_mode)
-            yield ProcessorPart(text=json.dumps(challenge_data))
+            yield ProcessorPart(json.dumps(challenge_data))
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Error processing input for challenge generation: {e}")
-            yield ProcessorPart(text=json.dumps({"error": "Invalid input format."}))
+            yield ProcessorPart(json.dumps({"error": "Invalid input format."}))
 
     async def _generate_challenge_logic(self, difficulty: int, state: GameState, game_mode: str) -> dict:
         try:
@@ -229,7 +233,7 @@ class ChallengeGeneratorProcessor(processor.Processor):
         input_json = json.dumps(input_data)
         
         response_json = ""
-        input_stream = streams.stream_content([ProcessorPart(text=input_json)])
+        input_stream = streams.stream_content([ProcessorPart(input_json)])
         async for part in self(input_stream):
             if part.text:
                 response_json += part.text
