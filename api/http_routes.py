@@ -63,6 +63,8 @@ async def get_challenge_endpoint(request: Request, difficulty: int = None, game_
         raise HTTPException(status_code=503, detail="Game processor not available.")
 
     current_state = await get_game_state(request.session)
+    
+    # If a specific game_mode is requested, use it. Otherwise, use the state's mode, defaulting to "story".
     game_mode = game_mode or current_state.game_mode or "story"
     current_state.game_mode = game_mode
     difficulty = difficulty or current_state.difficulty
@@ -84,7 +86,17 @@ async def get_challenge_endpoint(request: Request, difficulty: int = None, game_
     try:
         challenge_data = json.loads(response_json)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to decode response from game processor.")
+        if game_mode == "image":
+            logger.warning("Image generation failed, using fallback image.")
+            fallback_image = random.choice(os.listdir("sampleimg"))
+            challenge_data = {
+                "challenge_type": "image_description",
+                "source_text": f"/sampleimg/{fallback_image}",
+                "target_text": "Describe the image.",
+                "context": "Image Description",
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to decode response from game processor.")
 
     if "error_message" in challenge_data:
         raise HTTPException(status_code=503, detail=challenge_data["error_message"])
@@ -140,7 +152,16 @@ async def get_hint_endpoint(request: Request, challenge_id: str):
     if not context.game_processor:
         raise HTTPException(status_code=503, detail="Game processor not available.")
 
-    hint_data = await context.game_processor.challenge_generator.generate_hint(challenge.source_text)
+    current_state = await get_game_state(request.session)
+    story_context = ""
+    if current_state.story:
+        try:
+            story_data = json.loads(current_state.story)
+            story_context = story_data["chapters"][current_state.story_chapter]
+        except (json.JSONDecodeError, IndexError):
+            pass
+
+    hint_data = await context.game_processor.challenge_generator.generate_hint(challenge.source_text, story_context)
     return hint_data
 
 

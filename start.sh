@@ -30,7 +30,7 @@ do
         --help)
         echo -e "${C_CYAN}Usage: ./start.sh [--dev] [--debug] [--help]${C_RESET}"
         echo -e "  ${C_YELLOW}--dev${C_RESET}      Run in DEVELOPMENT mode (uses local JSON DB, Gemini for audio)."
-        echo -e "  ${C_YELLOW}--debug${C_RESET}    Enable verbose DEBUG logging, including Gemini API calls."
+        echo -e "  ${C_YELLOW}--debug${C_RESET}    Enable verbose DEBUG logging, including underlying API calls."
         echo -e "  ${C_YELLOW}--help${C_RESET}     Display this help message."
         exit 0
         ;;
@@ -66,11 +66,12 @@ fi
 if [ "$DEBUG_MODE" == true ]; then
     echo
     echo -e "${C_YELLOW}DEBUG mode is ENABLED.${C_RESET}"
-    echo -e "Expect ${C_RED}VERBOSE${C_RESET} logging. Gemini API requests and responses will be printed."
-    echo -e "This is useful for:
-    - Seeing the exact data sent to the Gemini model.
-    - Inspecting the raw responses from the model.
-    - Understanding how the Challenge Generator and Answer Evaluator work."
+    echo -e "Expect ${C_RED}EXTREMELY VERBOSE${C_RESET} logging."
+    echo -e "This will show detailed logs from:"
+    echo -e "  - ${C_CYAN}genai_processors${C_RESET}: The core library interacting with the Gemini API."
+    echo -e "  - ${C_CYAN}httpx${C_RESET}: The underlying HTTP client making the web requests."
+    echo -e "  - ${C_CYAN}google.api_core${C_RESET}: The Google Cloud client library."
+    echo -e "This is useful for deep debugging of API calls and model interactions."
 fi
 
 echo

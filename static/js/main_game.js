@@ -197,8 +197,8 @@
         if (isRecording) {
             mediaRecorder.stop();
             isRecording = false;
-            micBtn.classList.remove('bg-green-500');
-            micBtn.classList.add('bg-red-500');
+            micBtn.classList.remove('bg-red-500');
+            micBtn.classList.add('bg-green-500');
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -216,8 +216,8 @@
 
                 mediaRecorder.start();
                 isRecording = true;
-                micBtn.classList.remove('bg-red-500');
-                micBtn.classList.add('bg-green-500');
+                micBtn.classList.remove('bg-green-500');
+                micBtn.classList.add('bg-red-500');
 
             } catch (error) {
                 console.error("Error accessing microphone:", error);

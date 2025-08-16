@@ -45,10 +45,18 @@ if not args.debug:
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("websockets").setLevel(logging.WARNING)
+    logging.getLogger("genai_processors").setLevel(logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("google.api_core").setLevel(logging.WARNING)
+else:
+    # In debug mode, let's get all the details
+    logging.getLogger("genai_processors").setLevel(logging.DEBUG)
+    logging.getLogger("httpx").setLevel(logging.DEBUG)
+    logging.getLogger("google.api_core").setLevel(logging.DEBUG)
 
 
 # --- Constants ---
-GEMINI_DEV_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "imagen-2"]
+GEMINI_DEV_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "imagen-2", "imagen-3"]
 GEMINI_PROD_MODELS = ["gemini-2.5-pro", "gemini-2.5-flash"]
 GEMINI_TTS_MODEL_NAME = "gemini-2.5-flash-tts"
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")

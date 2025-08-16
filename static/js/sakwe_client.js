@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         websocket.onopen = () => {
             streamStatus.textContent = 'Connected. Start speaking!';
-            recordButton.textContent = 'Stop Recording';
+            recordButton.classList.remove('bg-green-500', 'hover:bg-green-700');
+            recordButton.classList.add('bg-red-500', 'hover:bg-red-700');
             isRecording = true;
             startMicrophone();
         };
@@ -38,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         websocket.onclose = () => {
             streamStatus.textContent = 'Disconnected.';
-            recordButton.textContent = 'Start Recording';
+            recordButton.classList.remove('bg-red-500', 'hover:bg-red-700');
+            recordButton.classList.add('bg-green-500', 'hover:bg-green-700');
             isRecording = false;
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
