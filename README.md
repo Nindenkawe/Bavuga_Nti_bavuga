@@ -1,42 +1,46 @@
-# Bavuga Ntibavuga - A Generative AI Language Game
+# Bavuga Ntibavuga - A Blueprint for Modern Generative AI Applications
 
 ## Overview
 
-**Bavuga Ntibavuga** is an interactive and educational language game powered by Google's Gemini model. It's designed to be a fun way to learn Kinyarwanda through a variety of challenges, from translating proverbs to solving traditional riddles. The entire game experience, from challenge creation to answer evaluation, is driven by generative AI.
+Building applications with large language models like Google's Gemini can be incredibly powerful, but it's easy to fall into the trap of creating messy, hard-to-maintain code. **Bavuga Ntibavuga** is a language learning game that serves as a blueprint for how to build clean, modular, and scalable AI-powered applications.
 
-This project serves as a practical example for the "Google Cloud Skills Boost" session, demonstrating how to build dynamic, intelligent, and engaging applications with modern AI and MLOps principles.
+This project demonstrates that getting started with generative AI doesn't have to be complicated. By using the right tools and architecture, you can build sophisticated features faster and more reliably.
 
-## Key Features
+At the heart of this project is the **`genai-processors`** library, which allows us to structure our AI interactions in a simple, powerful, and pythonic way.
 
-*   **Multiple Game Modes:**
-    *   **Story Mode:** An immersive narrative experience where challenges are part of an unfolding story.
-    *   **BavugaNtiBavuga Mode:** Classic translation challenges with proverbs and common phrases.
-    *   **Sakwe Sakwe Mode:** Traditional Kinyarwanda riddles (Ibisakuzo).
-    *   **Image Mode:** Describe images of Rwanda in Kinyarwanda or English.
-*   **AI-Powered:** All challenges and answer evaluations are handled by the Gemini model, creating a flexible and dynamic gameplay experience.
-*   **Audio Input/Output:** (Production Mode) Use your voice to answer and hear the feedback spoken back to you.
+## The Core Idea: Modular AI Processors
+
+Instead of making direct API calls to the Gemini model from all over the codebase, we've adopted a **processor model**. Each specific AI task is encapsulated in its own `Processor` class. Think of them as specialized "AI workers":
+
+-   `ChallengeGeneratorProcessor`: Its only job is to create new game challenges.
+-   `AnswerEvaluatorProcessor`: Its only job is to evaluate a user's answer.
+-   `StreamingAudioProcessor`: Its only job is to handle live audio transcription.
+
+This approach, enabled by the `genai-processors` library, makes our application:
+-   **Easy to Build:** We can develop and test each AI feature in isolation.
+-   **Easy to Read:** The logic is clean and organized, not tangled together.
+-   **Easy to Maintain:** If we want to improve challenge generation, we only need to edit one file.
+
+## Powerful Prompting Made Easy
+
+Getting high-quality responses from an AI model depends entirely on the quality of your prompts. This project uses several key **prompt engineering** techniques to get structured, relevant, and reliable results.
+
+The `genai-processors` architecture makes implementing these techniques incredibly straightforward:
+
+-   **Grounding:** We give the AI a clear role and a set of constraints. For example, our `AnswerEvaluatorProcessor` is told, "You are an expert in Kinyarwanda and English... Respond ONLY with 'Correct' or 'Incorrect'." This prevents conversational, ambiguous answers and gives us a reliable, programmatic output.
+
+-   **Few-Shot Prompting:** We give the model an example of the exact output format we want. For our translation challenges, we include a line like `Example: 'Where is the bathroom?|Bwihereho ni he?'`. This simple trick dramatically improves the consistency and structure of the AI's response.
+
+-   **Chaining & Composition:** Our `GameProcessor` acts as a pipeline, receiving a request and routing it to the correct specialized processor. This allows us to compose complex workflows from simple, reusable blocks.
 
 ## Getting Started
 
-To run the application on your local machine and explore the code, please refer to the detailed instructions in our developer's guide:
+To run the application on your local machine and explore the code, please refer to our detailed developer's guide:
 
-**[>> Go to the Session Guide (sessionguide.md)](sessionguide.md)**
+**[>> Go to the Developer's Deep Dive Guide (MLOps/sessionguide.md)](MLOps/sessionguide.md)**
 
-The session guide provides a complete walkthrough for setting up the project in both a simplified development mode and a full production environment with Docker.
+The guide provides a complete walkthrough for setting up the project in both a simplified development mode (with mock AI processors) and a full production environment with Docker.
 
-## For Developers & Session Attendees
+## A Note on AI-Powered Evaluation
 
-This repository is designed to be an educational resource. Here’s where to look to understand how it all works:
-
-*   **Technical Deep Dive:** For a full explanation of the architecture, game modes, and how we use the Gemini API, please see the [sessionguide.md](sessionguide.md).
-*   **MLOps Theory:** The `MLOps/` directory contains the Google Cloud whitepapers that form the theoretical foundation for the MLOps principles applied in this project.
-*   **Core Application Logic:** The heart of the application can be found in `main.py`, which contains the FastAPI server and all the game logic.
-*   **Database Logic:** The logic for interacting with the database (MongoDB in production, JSON file in dev mode) is in `db_logic.py`.
-
-## A Note on AI Evaluation
-
-A key feature of this application is that the Gemini model itself determines if an answer is correct. There isn't a hardcoded set of rules for the translations; the AI handles the linguistic evaluation, making the game more flexible and "human-like" in its understanding.
-But keep in mind that its terrible at evaluating kinyarwanda maybe a a model with more data on Rwanda and Kinyarwanda can do evaluation of user responses much better than the gemini model.
-
-
----
+A key feature of this application is that the Gemini model itself determines if a user's answer is correct. There isn't a hardcoded set of rules for the translations; the AI handles the linguistic evaluation. This demonstrates the potential of using generative models for complex, "human-like" evaluation tasks. The quality of this evaluation will continue to improve as underlying models are trained with more diverse and domain-specific data.

@@ -35,3 +35,6 @@ venv.old/
 
 # Local database
 dev_db.json
+
+# MLOps directory
+MLOps/

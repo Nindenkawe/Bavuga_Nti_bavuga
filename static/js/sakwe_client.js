@@ -1,55 +1,44 @@
 // static/js/sakwe_client.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const sakweButton = document.getElementById('sakwe-button');
-    const sakweStatus = document.getElementById('sakwe-status');
-    const audioFeaturesEnabled = {{ audio_features_enabled | tojson }};
-
-    if (!audioFeaturesEnabled) {
-        sakweButton.disabled = true;
-        sakweStatus.textContent = 'Audio features disabled.';
-        return;
-    }
-
+    const recordButton = document.getElementById('record-button');
+    const streamStatus = document.getElementById('stream-status');
+    
     let websocket;
     let mediaRecorder;
     let isRecording = false;
-    let audioContext;
-    let audioQueue = [];
-    let isPlaying = false;
 
-    sakweButton.addEventListener('click', () => {
+    recordButton.addEventListener('click', () => {
         if (isRecording) {
-            stopSakweGame();
+            stopRecording();
         } else {
-            startSakweGame();
+            startRecording();
         }
     });
 
-    function startSakweGame() {
-        sakweStatus.textContent = 'Connecting...';
-        const wsUrl = `ws://${window.location.host}/ws/sakwe`;
+    function startRecording() {
+        streamStatus.textContent = 'Connecting...';
+        const wsUrl = `ws://${window.location.host}/ws/audio`;
         websocket = new WebSocket(wsUrl);
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
         websocket.onopen = () => {
-            sakweStatus.textContent = 'Connected. Start speaking!';
-            sakweButton.textContent = 'Stop Sakwe Game';
+            streamStatus.textContent = 'Connected. Start speaking!';
+            recordButton.textContent = 'Stop Recording';
             isRecording = true;
             startMicrophone();
         };
 
-        websocket.onmessage = async (event) => {
-            const audioData = await event.data.arrayBuffer();
-            audioQueue.push(audioData);
-            if (!isPlaying) {
-                playNextInQueue();
-            }
+        websocket.onmessage = (event) => {
+            // Handle transcription results from the server
+            console.log("Received from server: ", event.data);
+            const answerInput = document.getElementById('answer-input');
+            answerInput.value = event.data;
+            streamStatus.textContent = "Transcription: " + event.data;
         };
 
         websocket.onclose = () => {
-            sakweStatus.textContent = 'Disconnected.';
-            sakweButton.textContent = 'Start Sakwe Game';
+            streamStatus.textContent = 'Disconnected.';
+            recordButton.textContent = 'Start Recording';
             isRecording = false;
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
@@ -58,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         websocket.onerror = (error) => {
             console.error('WebSocket Error:', error);
-            sakweStatus.textContent = 'Error connecting.';
+            streamStatus.textContent = 'Error connecting.';
             isRecording = false;
         };
     }
 
-    function stopSakweGame() {
+    function stopRecording() {
         if (websocket) {
             websocket.close();
         }
@@ -80,26 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                mediaRecorder.start(500); // Send audio data every 500ms
+                mediaRecorder.start(1000); // Send audio data every 1 second
             })
             .catch(error => {
                 console.error('Error accessing microphone:', error);
-                sakweStatus.textContent = 'Could not access microphone.';
+                streamStatus.textContent = 'Could not access microphone.';
             });
-    }
-
-    async function playNextInQueue() {
-        if (audioQueue.length === 0) {
-            isPlaying = false;
-            return;
-        }
-        isPlaying = true;
-        const audioData = audioQueue.shift();
-        const audioBuffer = await audioContext.decodeAudioData(audioData);
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.onended = playNextInQueue;
-        source.start();
     }
 });

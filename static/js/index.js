@@ -15,23 +15,17 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     const sourceTextElement = document.getElementById('source-text');
     const contextTextElement = document.getElementById('context-text');
     const somaBtn = document.getElementById('soma-btn');
-    const micBtn = document.getElementById('mic-btn');
+    
     const audioPlayer = document.getElementById('audio-player');
     const gameModeSelector = document.getElementById('game-mode-select');
     const hintBtn = document.getElementById('hint-btn');
 
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
+    
 
     updateScoreboard();
     gameModeSelector.value = currentGameMode;
     getNewChallenge();
-    if (!audioFeaturesEnabled) {
-        micBtn.disabled = true;
-        micBtn.style.cursor = 'not-allowed';
-        micBtn.style.opacity = '0.5';
-    }
+    
 
     gameModeSelector.addEventListener('change', () => {
         currentGameMode = gameModeSelector.value;
@@ -41,7 +35,7 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     submitBtn.addEventListener('click', submitAnswer);
     newChallengeBtn.addEventListener('click', getNewChallenge);
     somaBtn.addEventListener('click', handleSoma);
-    micBtn.addEventListener('click', toggleRecording);
+    
     hintBtn.addEventListener('click', getHint);
 
     async function handleSoma() {
@@ -71,7 +65,7 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
         newChallengeBtn.disabled = true;
         submitBtn.disabled = true;
         somaBtn.disabled = true;
-        if (audioFeaturesEnabled) micBtn.disabled = true;
+        
         hintBtn.disabled = true;
         
         try {
@@ -88,7 +82,7 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
             newChallengeBtn.disabled = false;
             submitBtn.disabled = false;
             somaBtn.disabled = false;
-            if (audioFeaturesEnabled) micBtn.disabled = false;
+            
             hintBtn.disabled = false;
         }
     }
@@ -198,70 +192,7 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
 
     let socket;
 
-    async function toggleRecording() {
-        if (!audioFeaturesEnabled) return;
-
-        if (isRecording) {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            }
-            isRecording = false;
-            micBtn.classList.remove('bg-green-500');
-            micBtn.classList.add('bg-red-500');
-            instructionElement.textContent = 'Recording stopped.';
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-
-            const wsUrl = `wss://${window.location.host}/ws/transcribe`;
-            socket = new WebSocket(wsUrl);
-
-            socket.onopen = () => {
-                instructionElement.textContent = 'Recording...';
-                mediaRecorder.start(1000); // Send data every 1 second
-            };
-
-            socket.onmessage = (event) => {
-                answerInput.value = event.data;
-            };
-
-            socket.onerror = (error) => {
-                console.error('WebSocket Error:', error);
-                instructionElement.textContent = 'Error connecting to transcription service.';
-            };
-
-            socket.onclose = () => {
-                instructionElement.textContent = 'Transcription service disconnected.';
-            };
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-                    socket.send(event.data);
-                }
-            };
-
-            mediaRecorder.onstop = () => {
-                if (socket.readyState === WebSocket.OPEN) {
-                    socket.close();
-                }
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            isRecording = true;
-            micBtn.classList.remove('bg-red-500');
-            micBtn.classList.add('bg-green-500');
-
-        } catch (error) {
-            console.error("Error accessing microphone:", error);
-            alert("Could not access microphone. Please ensure you have given permission.");
-        }
-    }
+    
 
     async function synthesizeAndPlay(text) {
         if (!audioFeaturesEnabled) return;
