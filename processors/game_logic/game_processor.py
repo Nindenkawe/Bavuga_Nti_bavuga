@@ -39,6 +39,15 @@ class GameProcessor(processor.Processor):
                 chain_input_stream = streams.stream_content([ProcessorPart(json.dumps(input_data))])
                 async for part in self.answer_evaluator(chain_input_stream):
                     yield part
+
+            elif action == "get_hint":
+                riddle = input_data.get("riddle")
+                if not riddle:
+                    yield ProcessorPart(json.dumps({"error": "Riddle not provided for hint."}));
+                    return
+                
+                hint_data = await self.challenge_generator.generate_hint(riddle)
+                yield ProcessorPart(json.dumps(hint_data))
             
             else:
                 error_message = json.dumps({"error": "Invalid action specified."})

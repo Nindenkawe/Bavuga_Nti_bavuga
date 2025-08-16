@@ -2,9 +2,10 @@ import os
 import io
 import json
 import random
+import logging
 from typing import Optional
 
-from fastapi import APIRouter, Request, Form, HTTPException, UploadFile, File
+from fastapi import APIRouter, Request, Form, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from genai_processors import streams, processor, content_api
@@ -29,6 +30,7 @@ from api.models import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="templates")
 
 
@@ -61,7 +63,7 @@ async def get_challenge_endpoint(request: Request, difficulty: int = None, game_
         raise HTTPException(status_code=503, detail="Game processor not available.")
 
     current_state = await get_game_state(request.session)
-    game_mode = game_mode or current_state.game_mode or "translation"
+    game_mode = game_mode or current_state.game_mode or "story"
     current_state.game_mode = game_mode
     difficulty = difficulty or current_state.difficulty
 
@@ -127,6 +129,19 @@ async def soma_endpoint(request: Request):
         context=challenge.context,
         challenge_type=challenge.challenge_type,
     )
+
+
+@router.get("/get_hint", response_model=dict)
+async def get_hint_endpoint(request: Request, challenge_id: str):
+    challenge = await get_challenge(challenge_id)
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found.")
+
+    if not context.game_processor:
+        raise HTTPException(status_code=503, detail="Game processor not available.")
+
+    hint_data = await context.game_processor.challenge_generator.generate_hint(challenge.source_text)
+    return hint_data
 
 
 @router.post("/submit_answer", response_model=SubmissionResponse)
@@ -207,22 +222,31 @@ async def submit_answer_endpoint(
     )
 
 
-@router.post("/transcribe", response_model=TranscribeResponse)
-async def transcribe_audio(audio_file: UploadFile = File(...)):
+@router.websocket("/ws/transcribe")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
     if not context.stt_processor:
-        raise HTTPException(
-            status_code=503, detail="Speech-to-text service not available."
-        )
+        await websocket.close(code=1011, reason="Speech-to-text service not available.")
+        return
+
+    async def audio_stream_generator():
+        while True:
+            try:
+                data = await websocket.receive_bytes()
+                yield ProcessorPart(audio=data)
+            except WebSocketDisconnect:
+                break
+
     try:
-        audio_data = await audio_file.read()
-        result_parts = await processor.apply_async(
-            context.stt_processor,
-            [content_api.ProcessorPart(audio_data, mimetype=audio_file.content_type)],
-        )
-        transcript = "".join(part.text for part in result_parts if part.text)
-        return TranscribeResponse(transcript=transcript)
+        response_stream = context.stt_processor(audio_stream_generator())
+        async for part in response_stream:
+            if part.text:
+                await websocket.send_text(part.text)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to transcribe audio.")
+        logger.error(f"Error during transcription: {e}")
+    finally:
+        await websocket.close()
 
 
 @router.post("/synthesize")

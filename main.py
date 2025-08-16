@@ -48,9 +48,9 @@ if not args.debug:
 
 
 # --- Constants ---
-GEMINI_DEV_MODELS = ["gemini-1.5-flash"]
-GEMINI_PROD_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash"]
-GEMINI_TTS_MODEL_NAME = "gemini-1.5-flash-tts"
+GEMINI_DEV_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "imagen-2"]
+GEMINI_PROD_MODELS = ["gemini-2.5-pro", "gemini-2.5-flash"]
+GEMINI_TTS_MODEL_NAME = "gemini-2.5-flash-tts"
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 IMAGE_DIR = "sampleimg"

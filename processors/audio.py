@@ -1,8 +1,10 @@
 import logging
+import os
 from typing import TypedDict, AsyncGenerator
 
 from genai_processors.processor import Processor
 from genai_processors import part_processor_function
+from genai_processors.core import live_model
 # from genai_processors.core import speech_to_text, text_to_speech
 from genai_processors import content_api, streams
 from genai_processors.content_api import ProcessorPart
@@ -20,27 +22,18 @@ class TextAndVoiceInput(TypedDict):
     voice: str
 
 
-@part_processor_function
-async def log_and_pass(part: ProcessorPart) -> AsyncGenerator[ProcessorPart, None]:
-    """A simple processor to log the input and pass it through."""
-    if part.text:
-        logger.info(f"DEV MODE (TTS): Synthesizing text: '{part.text[:30]}...'")
-    yield part
-
-
 # --- Gemini-powered processors for Dev Mode ---
 
 def create_gemini_speech_to_text_processor(model_name: str) -> Processor:
     """Creates a speech-to-text processor using a Gemini model."""
-    # This is a placeholder, as the library doesn't provide a direct Gemini STT processor
-    # in the same way it does for Google Cloud.
-    # We'll simulate the behavior.
-    @part_processor_function
-    async def gemini_audio_to_text(part: ProcessorPart) -> AsyncGenerator[ProcessorPart, None]:
-        if part.audio:
-            logger.info("DEV MODE (STT): Simulating Gemini speech-to-text.")
-            yield ProcessorPart("simulated speech to text")
-    return gemini_audio_to_text
+    logger.info("Initializing Gemini speech-to-text processor...")
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    return live_model.LiveProcessor(
+        model_name=model_name,
+        api_key=api_key,
+    )
 
 def create_gemini_text_to_speech_processor(model_name: str) -> Processor:
     """Creates a text-to-speech processor using a Gemini model."""
@@ -51,7 +44,7 @@ def create_gemini_text_to_speech_processor(model_name: str) -> Processor:
         if part.text:
             logger.info(f"DEV MODE (TTS): Simulating Gemini text-to-speech for: {part.text}")
             yield ProcessorPart(b"simulated audio data", mimetype="audio/mpeg")
-    return log_and_pass + gemini_text_to_audio
+    return gemini_text_to_audio
 
 
 # --- Google Cloud processors for Production Mode ---

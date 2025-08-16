@@ -24,16 +24,14 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     let audioChunks = [];
     let isRecording = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updateScoreboard();
-        gameModeSelector.value = currentGameMode;
-        getNewChallenge();
-        if (!audioFeaturesEnabled) {
-            micBtn.disabled = true;
-            micBtn.style.cursor = 'not-allowed';
-            micBtn.style.opacity = '0.5';
-        }
-    });
+    updateScoreboard();
+    gameModeSelector.value = currentGameMode;
+    getNewChallenge();
+    if (!audioFeaturesEnabled) {
+        micBtn.disabled = true;
+        micBtn.style.cursor = 'not-allowed';
+        micBtn.style.opacity = '0.5';
+    }
 
     gameModeSelector.addEventListener('change', () => {
         currentGameMode = gameModeSelector.value;
@@ -98,6 +96,9 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     async function getNewChallenge() {
         challengeContent.classList.add('hidden');
         instructionElement.textContent = 'Loading challenge...';
+        if (currentGameMode === 'image') {
+            instructionElement.textContent = 'Generating a new image, this might take a minute or two...';
+        }
         answerInput.value = '';
         feedbackMessage.textContent = '';
         correctAnswerFeedback.textContent = '';
@@ -125,10 +126,14 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
                 }
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                    instructionElement.textContent = 'What do you think this image means? Describe it in Kinyarwanda or English:';
+                    instructionElement.textContent = 'Describe what you see in Kinyarwanda or English.';
+                } else if (data.challenge_type === 'text_description') {
+                    sourceTextElement.textContent = data.source_text;
+                    instructionElement.textContent = 'Read the description and imagine the scene. There is no right or wrong answer.';
+                    submitBtn.parentElement.classList.add('hidden');
                 } else {
                     sourceTextElement.textContent = data.source_text;
-                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'What do you think this means in English?' : 'What do you think this means in Kinyarwanda?';
+                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Can you speak or type this in English?' : 'Can you speak or type this in Kinyarwanda?';
                 }
                 contextTextElement.textContent = data.context || '';
             }
@@ -191,52 +196,70 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
         }
     }
 
+    let socket;
+
     async function toggleRecording() {
         if (!audioFeaturesEnabled) return;
+
         if (isRecording) {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
             isRecording = false;
             micBtn.classList.remove('bg-green-500');
             micBtn.classList.add('bg-red-500');
-        } else {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-                
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
-                    audioChunks = [];
-                    await transcribeAndFill(audioBlob);
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                micBtn.classList.remove('bg-red-500');
-                micBtn.classList.add('bg-green-500');
-
-            } catch (error) {
-                console.error("Error accessing microphone:", error);
-                alert("Could not access microphone. Please ensure you have given permission.");
-            }
+            instructionElement.textContent = 'Recording stopped.';
+            return;
         }
-    }
 
-    async function transcribeAndFill(audioBlob) {
-        const formData = new FormData();
-        formData.append('audio_file', audioBlob, 'recording.webm');
-        
         try {
-            instructionElement.textContent = 'Transcribing...';
-            const data = await fetchApi('/transcribe', { method: 'POST', body: formData });
-            answerInput.value = data.transcript;
-            instructionElement.textContent = 'Transcription complete.';
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+
+            const wsUrl = `wss://${window.location.host}/ws/transcribe`;
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = () => {
+                instructionElement.textContent = 'Recording...';
+                mediaRecorder.start(1000); // Send data every 1 second
+            };
+
+            socket.onmessage = (event) => {
+                answerInput.value = event.data;
+            };
+
+            socket.onerror = (error) => {
+                console.error('WebSocket Error:', error);
+                instructionElement.textContent = 'Error connecting to transcription service.';
+            };
+
+            socket.onclose = () => {
+                instructionElement.textContent = 'Transcription service disconnected.';
+            };
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+                    socket.send(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.close();
+                }
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            isRecording = true;
+            micBtn.classList.remove('bg-red-500');
+            micBtn.classList.add('bg-green-500');
+
         } catch (error) {
-            console.error("Error during transcription:", error);
-            instructionElement.textContent = `Transcription failed: ${error.message}`;
+            console.error("Error accessing microphone:", error);
+            alert("Could not access microphone. Please ensure you have given permission.");
         }
     }
 

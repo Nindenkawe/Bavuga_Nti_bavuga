@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import TypedDict
+import re
 
 from genai_processors import processor
 from genai_processors.core import genai_model
@@ -36,6 +37,10 @@ class AnswerEvaluatorProcessor(processor.Processor):
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found in environment variables.")
         self.api_key = api_key
+    
+    def _clean_text(self, text: str) -> str:
+        """Removes punctuation, and extra whitespace and converts to lowercase."""
+        return re.sub(r"[^\w\s]", "", text).lower().strip()
 
     async def call(
         self,
@@ -58,7 +63,7 @@ class AnswerEvaluatorProcessor(processor.Processor):
 
             # For riddles, the answer must be exact for cultural accuracy
             if challenge_type == "gusakuza":
-                is_correct = user_answer.lower().strip() == target_text.lower().strip()
+                is_correct = self._clean_text(user_answer) == self._clean_text(target_text)
                 yield ProcessorPart(json.dumps({"is_correct": is_correct}))
                 return
 
