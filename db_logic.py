@@ -57,7 +57,8 @@ def _init_dev_db():
                     "game_mode": "story",
                     "thematic_words": [],
                     "story": None,
-                    "story_chapter": 0
+                    "story_chapter": 0,
+                    "life_lost": False
                 }]
             }, f, indent=4)
         logger.info(f"Initialized development database at {DEV_DB_FILE}")
@@ -142,6 +143,7 @@ class GameState(BaseModel):
     story: Optional[str] = None
     story_chapter: int = 0
     difficulty: int = 1
+    life_lost: bool = False
 
     class Config:
         arbitrary_types_allowed = True

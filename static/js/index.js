@@ -20,13 +20,10 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     const gameModeSelector = document.getElementById('game-mode-select');
     const hintBtn = document.getElementById('hint-btn');
 
-    
-
     updateScoreboard();
     gameModeSelector.value = currentGameMode;
     getNewChallenge();
     
-
     gameModeSelector.addEventListener('change', () => {
         currentGameMode = gameModeSelector.value;
         getNewChallenge();
@@ -35,7 +32,6 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
     submitBtn.addEventListener('click', submitAnswer);
     newChallengeBtn.addEventListener('click', getNewChallenge);
     somaBtn.addEventListener('click', handleSoma);
-    
     hintBtn.addEventListener('click', getHint);
 
     async function handleSoma() {
@@ -65,7 +61,6 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
         newChallengeBtn.disabled = true;
         submitBtn.disabled = true;
         somaBtn.disabled = true;
-        
         hintBtn.disabled = true;
         
         try {
@@ -82,7 +77,6 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
             newChallengeBtn.disabled = false;
             submitBtn.disabled = false;
             somaBtn.disabled = false;
-            
             hintBtn.disabled = false;
         }
     }
@@ -120,16 +114,11 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
                 }
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                    instructionElement.textContent = 'Describe what you see in Kinyarwanda or English.';
-                } else if (data.challenge_type === 'text_description') {
-                    sourceTextElement.textContent = data.source_text;
-                    instructionElement.textContent = 'Read the description and imagine the scene. There is no right or wrong answer.';
-                    submitBtn.parentElement.classList.add('hidden');
                 } else {
                     sourceTextElement.textContent = data.source_text;
-                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'Can you speak or type this in English?' : 'Can you speak or type this in Kinyarwanda?';
                 }
-                contextTextElement.textContent = data.context || '';
+                instructionElement.textContent = data.context || 'Translate the phrase.';
+                contextTextElement.textContent = "";
             }
 
             challengeContent.classList.remove('hidden');
@@ -141,12 +130,11 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
 
     async function getHint() {
         if (!currentChallengeId) return;
-
         try {
             const data = await fetchApi(`/get_hint?challenge_id=${currentChallengeId}`);
             feedbackMessage.textContent = `Hint: ${data.hint}`;
             correctAnswerFeedback.textContent = '';
-            hintBtn.disabled = true; // Disable after use
+            hintBtn.disabled = true;
         } catch (error) {
             feedbackMessage.textContent = `Error: ${error.message}`;
             console.error("Error fetching hint:", error);
@@ -169,11 +157,10 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
             updateScoreboard();
 
             feedbackMessage.textContent = data.message;
-            correctAnswerFeedback.textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
+            correctAnswerFeedback.textContent = ""; // Clear this as the new message contains everything
             
             if (audioFeaturesEnabled) {
-                const textToSpeak = data.is_correct ? data.message : `${data.message}. The correct answer was: ${data.correct_answer}`;
-                await synthesizeAndPlay(textToSpeak);
+                await synthesizeAndPlay(data.message);
             }
 
             if (lives <= 0) {
@@ -189,10 +176,6 @@ function init(audioFeaturesEnabled, initialLives, initialScore, initialGameMode)
             console.error("Error submitting answer:", error);
         }
     }
-
-    let socket;
-
-    
 
     async function synthesizeAndPlay(text) {
         if (!audioFeaturesEnabled) return;

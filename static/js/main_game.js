@@ -126,12 +126,11 @@
                 }
                 if (data.challenge_type === 'image_description') {
                     sourceTextElement.innerHTML = `<img src="${data.source_text}" alt="Challenge image" class="mx-auto rounded-lg">`;
-                    instructionElement.textContent = 'What do you think this image means? Describe it in Kinyarwanda or English:';
                 } else {
                     sourceTextElement.textContent = data.source_text;
-                    instructionElement.textContent = data.challenge_type.includes('kin_to_eng') ? 'What do you think this means in English?' : 'What do you think this means in Kinyarwanda?';
                 }
-                contextTextElement.textContent = data.context || '';
+                instructionElement.textContent = data.context || 'Translate the phrase.';
+                contextTextElement.textContent = "";
             }
 
             challengeContent.classList.remove('hidden');
@@ -143,12 +142,11 @@
 
     async function getHint() {
         if (!currentChallengeId) return;
-
         try {
             const data = await fetchApi(`/get_hint?challenge_id=${currentChallengeId}`);
             feedbackMessage.textContent = `Hint: ${data.hint}`;
             correctAnswerFeedback.textContent = '';
-            hintBtn.disabled = true; // Disable after use
+            hintBtn.disabled = true;
         } catch (error) {
             feedbackMessage.textContent = `Error: ${error.message}`;
             console.error("Error fetching hint:", error);
@@ -171,11 +169,10 @@
             updateScoreboard();
 
             feedbackMessage.textContent = data.message;
-            correctAnswerFeedback.textContent = data.is_correct ? '' : `Correct answer: ${data.correct_answer}`;
+            correctAnswerFeedback.textContent = ""; // Clear this as the new message contains everything
             
             if (audioFeaturesEnabled) {
-                const textToSpeak = data.is_correct ? data.message : `${data.message}. The correct answer was: ${data.correct_answer}`;
-                await synthesizeAndPlay(textToSpeak);
+                await synthesizeAndPlay(data.message);
             }
 
             if (lives <= 0) {
