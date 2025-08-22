@@ -42,3 +42,6 @@ logs/
 MLOps/
 # Google Cloud Credentials
 google-credentials.json
+
+# VSCode
+.vscode/

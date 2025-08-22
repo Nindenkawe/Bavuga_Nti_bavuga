@@ -1,6 +1,5 @@
 import os
 import logging
-import argparse
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,18 +20,17 @@ from processors.challenge_generator import ChallengeGeneratorProcessor
 from processors.answer_evaluator import AnswerEvaluatorProcessor
 from processors.game_logic.game_processor import GameProcessor
 
-# --- Argument Parsing and App Mode Initialization ---
-parser = argparse.ArgumentParser(description="Bavuga_Nti_bavuga Language App")
-parser.add_argument("--dev", action="store_true", help="Run in development mode.")
-parser.add_argument("--debug", action="store_true", help="Enable detailed debug logging.")
-args = parser.parse_args()
-
-init_app_mode(args.dev)
-
 # --- Configuration ---
 load_dotenv()
+
+# Determine run mode from environment variables
+IS_DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
+IS_DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+
+init_app_mode(IS_DEV_MODE)
+
 # Configure logging with a specific format
-log_level = logging.DEBUG if args.debug else logging.INFO
+log_level = logging.DEBUG if IS_DEBUG_MODE else logging.INFO
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -41,7 +39,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Suppress verbose logging from Uvicorn and other libraries in non-debug mode
-if not args.debug:
+if not IS_DEBUG_MODE:
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("websockets").setLevel(logging.WARNING)
@@ -69,7 +67,7 @@ from api.models import ChallengeResponse, SubmissionResponse, TranscribeResponse
 async def lifespan(app: FastAPI):
     logger.info("="*20 + " Application Lifespan Start " + "="*20)
     logger.info(f"Running in {'DEV' if db_logic.DEV_MODE else 'PROD'} mode.")
-    logger.debug(f"Debug mode is {'ENABLED' if args.debug else 'DISABLED'}.")
+    logger.debug(f"Debug mode is {'ENABLED' if IS_DEBUG_MODE else 'DISABLED'}.")
 
     # --- Database Connection ---
     if not db_logic.DEV_MODE:
@@ -156,12 +154,3 @@ def create_app():
     return app
 
 app = create_app()
-
-# --- Main Execution ---
-if __name__ == "__main__":
-    try:
-        import uvicorn
-        uvicorn.run(app, host="0.0.0.0", port=2500)
-    except (ValueError, KeyError) as e: # Catches critical startup errors like missing .env variables
-        logger.critical(f"Application failed to start: {e}", exc_info=True)
-        exit(1)
