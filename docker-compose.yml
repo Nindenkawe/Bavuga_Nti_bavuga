@@ -1,3 +1,4 @@
+version: '3.3'
 services:
   app:
     build: .
@@ -14,8 +15,7 @@ services:
     volumes:
       - ./google-credentials.json:/app/google-credentials.json:ro
     depends_on:
-      database:
-        condition: service_healthy
+      - database
   database:
     image: mongo:latest
     container_name: bavuga-db
@@ -29,6 +29,5 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
 volumes:
   mongo-data:
