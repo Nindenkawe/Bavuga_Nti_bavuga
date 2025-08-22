@@ -30,12 +30,17 @@ do
         --help)
         echo -e "${C_CYAN}Usage: ./start.sh [--dev] [--debug] [--help]${C_RESET}"
         echo -e "  ${C_YELLOW}--dev${C_RESET}      Run in DEVELOPMENT mode (uses local JSON DB, Gemini for audio)."
-        echo -e "  ${C_YELLOW}--debug${C_RESET}    Enable verbose DEBUG logging, including underlying API calls."
+        echo -e "  ${C_YELLOW}--debug${C_RESET}    Enable verbose DEBUG logging and save a detailed log file."
         echo -e "  ${C_YELLOW}--help${C_RESET}     Display this help message."
         exit 0
         ;;
     esac
 done
+
+# --- Create logs directory ---
+LOG_DIR="logs"
+mkdir -p $LOG_DIR
+LOG_FILE="$LOG_DIR/run_$(date +%Y-%m-%d_%H-%M-%S).log"
 
 # --- Build the command ---
 CMD="python3 main.py"
@@ -63,15 +68,20 @@ else
     echo -e "${C_GREEN}Audio Proc:${C_RESET} Using ${C_CYAN}Google Cloud APIs${C_RESET}. (Ensure GOOGLE_CLOUD_PROJECT is set)."
 fi
 
+echo
+
 if [ "$DEBUG_MODE" == true ]; then
-    echo
     echo -e "${C_YELLOW}DEBUG mode is ENABLED.${C_RESET}"
-    echo -e "Expect ${C_RED}EXTREMELY VERBOSE${C_RESET} logging."
-    echo -e "This will show detailed logs from:"
-    echo -e "  - ${C_CYAN}genai_processors${C_RESET}: The core library interacting with the Gemini API."
-    echo -e "  - ${C_CYAN}httpx${C_RESET}: The underlying HTTP client making the web requests."
-    echo -e "  - ${C_CYAN}google.api_core${C_RESET}: The Google Cloud client library."
-    echo -e "This is useful for deep debugging of API calls and model interactions."
+    echo -e "A detailed log of this session will be saved to: ${C_CYAN}${LOG_FILE}${C_RESET}"
+    echo -e "This log will contain verbose output, including:"
+    echo -e "  - ${C_CYAN}API Interactions${C_RESET}: Requests and responses from the frontend."
+    echo -e "  - ${C_CYAN}genai-processors${C_RESET}: Prompts sent to the Gemini model."
+    echo -e "  - ${C_CYAN}Gemini Model${C_RESET}: Raw responses received from the LLM."
+    echo -e "  - ${C_CYAN}httpx & google.api_core${C_RESET}: Underlying HTTP requests and cloud client library calls."
+    echo
+    echo -e "You can monitor the log in real-time with: ${C_YELLOW}tail -f ${LOG_FILE}${C_RESET}"
+else
+    echo -e "${C_YELLOW}For detailed logs of all API and model interactions, run with the --debug flag.${C_RESET}"
 fi
 
 echo
@@ -83,4 +93,13 @@ echo
 # The trap will execute on EXIT, which includes Ctrl+C
 trap "echo; echo -e \"${C_RED}-----------------------------------------\"; echo -e \"${C_RED}Application stopped.${C_RESET}\"; echo;" EXIT
 
-$CMD
+# Use tee to send output to both the console and the log file
+# Use stdbuf to disable output buffering to ensure real-time logging
+if [ "$DEBUG_MODE" == true ]; then
+    # In debug mode, we pipe all output (stdout & stderr) to tee, which logs to a file and prints to the console.
+    # stdbuf -oL sets the output stream to be line-buffered.
+    stdbuf -oL -eL $CMD 2>&1 | tee "$LOG_FILE"
+else
+    # In normal mode, just run the command.
+    $CMD
+fi

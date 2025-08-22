@@ -66,9 +66,12 @@ class ChallengeGeneratorProcessor(processor.Processor):
                 "Example: 'Where is the bathroom?|Bwihereho ni he?'. No other text."
             ),
             "riddle_hint": (
-                "The Kinyarwanda riddle is: '{riddle}'. "
-                "Based on the following story context: '{story_context}', provide a short, one-sentence hint for this riddle that subtly references the story's themes or vocabulary. "
-                "Also provide the English translation of the riddle itself. "
+                "You are a creative Kinyarwanda language tutor. Your goal is to help a user solve a riddle.\n"
+                "The riddle is: '{riddle}'\n"
+                "The answer to the riddle is: '{answer}'\n"
+                "The current story context is: '{story_context}'\n\n"
+                "Based on all this information, provide a short, one-sentence hint for the riddle. The hint should subtly reference the story's themes or vocabulary AND help the user guess the answer.\n"
+                "Also provide the English translation of the riddle itself.\n"
                 "Output as 'Hint: [Your hint here]|Translation: [Your translation here]'. No other text."
             ),
             "image_prompt_generation": (
@@ -134,9 +137,9 @@ class ChallengeGeneratorProcessor(processor.Processor):
                 continue
         return None
 
-    async def generate_hint(self, riddle: str, story_context: str) -> dict:
+    async def generate_hint(self, riddle: str, answer: str, story_context: str) -> dict:
         try:
-            processor_input = {"riddle": riddle, "story_context": story_context}
+            processor_input = {"riddle": riddle, "answer": answer, "story_context": story_context}
             response_text = await self._run_text_processor(processor_input, "riddle_hint")
             
             if not response_text: return {"error": "Failed to generate hint."}
@@ -157,26 +160,39 @@ class ChallengeGeneratorProcessor(processor.Processor):
         
         try:
             input_data = json.loads(input_json)
-            challenge_data = await self._generate_challenge_logic(
+            # Note the change here: we now expect a dictionary with 'challenge' and 'state'
+            result_data = await self._generate_challenge_logic(
                 input_data["difficulty"], GameState(**input_data["state"]),
                 input_data["game_mode"]
             )
-            yield ProcessorPart(json.dumps(challenge_data))
+            # We serialize the entire result dictionary
+            yield ProcessorPart(json.dumps(result_data))
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Error processing input for challenge generation: {e}")
             yield ProcessorPart(json.dumps({"error": "Invalid input format."}))
 
     async def _generate_challenge_logic(self, difficulty: int, state: GameState, game_mode: str) -> dict:
+        '''
+        Generates a challenge and returns it along with the updated game state.
+        This is the core of the chaining technique, ensuring context is maintained.
+        '''
+        challenge = {}
         try:
             level = {1: "beginner", 2: "intermediate", 3: "advanced"}.get(difficulty, "intermediate")
             
+            # --- Story Generation and Context Persistence ---
+            # If there's no story or the story is finished, create a new one.
+            # This state change will be passed back to the API layer.
             if not state.story or state.story_chapter >= len(json.loads(state.story).get("chapters", [])):
                 story_json_str = await self._run_text_processor({}, "story_creation")
-                if not story_json_str: return await self._generate_static_challenge(game_mode)
-                try:
-                    state.story = json.dumps(json.loads(story_json_str.strip().replace("```json", "").replace("```", "")))
-                    state.story_chapter = 0
-                except json.JSONDecodeError: return await self._generate_static_challenge(game_mode)
+                if not story_json_str:
+                    challenge = await self._generate_static_challenge(game_mode)
+                else:
+                    try:
+                        state.story = json.dumps(json.loads(story_json_str.strip().replace("```json", "").replace("```", "")))
+                        state.story_chapter = 0
+                    except json.JSONDecodeError:
+                        challenge = await self._generate_static_challenge(game_mode)
             
             story_data = json.loads(state.story)
             story_context = story_data["chapters"][state.story_chapter]
@@ -186,59 +202,81 @@ class ChallengeGeneratorProcessor(processor.Processor):
                 story_chapter_text=story_context, story_context=story_context, challenge_type=""
             )
 
+            # --- Challenge Generation using Story Context ---
             if game_mode == "story":
                 processor_input["challenge_type"] = "story_translation"
                 response_text = await self._run_text_processor(processor_input, "story_translation")
                 context = f"Chapter {state.story_chapter + 1}: {story_context}"
-                state.story_chapter += 1
-            elif game_mode == "sakwe":
-                if not self.ibisakuzo_examples: return {"error_message": "Riddle database is empty."}
-                riddle_data = random.choice(self.ibisakuzo_examples)
-                return {
-                    "challenge_type": "gusakuza_init", "source_text": "Sakwe sakwe!", 
-                    "target_text": f"{riddle_data['riddle']}|{riddle_data['answer']}", 
-                    "context": "Reply with 'soma' to get the riddle."
-                }
-            elif game_mode == "image":
-                image_files = [f for f in os.listdir(self.image_dir) if f.endswith((".png", ".jpg", ".jpeg"))]
-                if not image_files: return {"error_message": f"No images found in {self.image_dir}."}
-                
-                try:
-                    img = Image.open(os.path.join(self.image_dir, random.choice(image_files)))
-                    prompt_input = {"image": img, "story_context": story_context}
-                    image_prompt = await self._run_text_processor(prompt_input, "image_prompt_generation")
-                    if not image_prompt: return await self._generate_static_challenge(game_mode)
-
-                    image_models = [m for m in self.model_names if "imagen" in m]
-                    generated_image_data = await self._run_image_generation_processor(image_prompt, image_models)
-                    if not generated_image_data: return await self._generate_static_challenge(game_mode)
-
-                    gen_path = os.path.join("static", "generated", "generated_image.png")
-                    os.makedirs(os.path.dirname(gen_path), exist_ok=True)
-                    with open(gen_path, "wb") as f: f.write(generated_image_data)
-                    
-                    instruction = await self._run_text_processor(
-                        {"story_context": story_context, "challenge_type": "image_description"}, "instruction_generation"
-                    )
-                    return {
-                        "challenge_type": "image_description", "source_text": "/" + gen_path,
-                        "target_text": "There is no correct answer for this challenge.", "context": instruction
+                state.story_chapter += 1 # This state change is now persisted
+                parts = re.sub(r'#+\s*|\*+\s*', '', response_text).strip().split("|")
+                if len(parts) < 2:
+                    challenge = await self._generate_static_challenge(game_mode)
+                else:
+                    challenge = {
+                        "challenge_type": processor_input["challenge_type"], "source_text": parts[0].strip(), 
+                        "target_text": parts[1].strip(), "context": context
                     }
-                except Exception as e:
-                    logger.error(f"Failed to process image: {e}")
-                    return await self._generate_static_challenge(game_mode)
+            elif game_mode == "sakwe":
+                if not self.ibisakuzo_examples:
+                    challenge = {"error_message": "Riddle database is empty."}
+                else:
+                    riddle_data = random.choice(self.ibisakuzo_examples)
+                    challenge = {
+                        "challenge_type": "gusakuza_init", "source_text": "Sakwe sakwe!", 
+                        "target_text": f"{riddle_data['riddle']}|{riddle_data['answer']}", 
+                        "context": "Reply with 'soma' to get the riddle."
+                    }
+            elif game_mode == "image":
+                # ... (image generation logic remains the same, but now uses story_context)
+                # This part is already using story_context correctly.
+                image_files = [f for f in os.listdir(self.image_dir) if f.endswith((".png", ".jpg", ".jpeg"))]
+                if not image_files:
+                    challenge = {"error_message": f"No images found in {self.image_dir}."}
+                else:
+                    try:
+                        img = Image.open(os.path.join(self.image_dir, random.choice(image_files)))
+                        prompt_input = {"image": img, "story_context": story_context}
+                        image_prompt = await self._run_text_processor(prompt_input, "image_prompt_generation")
+                        if not image_prompt:
+                            challenge = await self._generate_static_challenge(game_mode)
+                        else:
+                            image_models = [m for m in self.model_names if "imagen" in m]
+                            generated_image_data = await self._run_image_generation_processor(image_prompt, image_models)
+                            if not generated_image_data:
+                                challenge = await self._generate_static_challenge(game_mode)
+                            else:
+                                gen_path = os.path.join("static", "generated", "generated_image.png")
+                                os.makedirs(os.path.dirname(gen_path), exist_ok=True)
+                                with open(gen_path, "wb") as f: f.write(generated_image_data)
+                                
+                                instruction = await self._run_text_processor(
+                                    {"story_context": story_context, "challenge_type": "image_description"}, "instruction_generation"
+                                )
+                                challenge = {
+                                    "challenge_type": "image_description", "source_text": "/" + gen_path,
+                                    "target_text": "There is no correct answer for this challenge.", "context": instruction
+                                }
+                    except Exception as e:
+                        logger.error(f"Failed to process image: {e}")
+                        challenge = await self._generate_static_challenge(game_mode)
             else: # Translation
                 processor_input["challenge_type"] = random.choice(["kin_to_eng_proverb", "eng_to_kin_phrase"])
                 response_text = await self._run_text_processor(processor_input, processor_input["challenge_type"])
                 context = await self._run_text_processor(processor_input, "instruction_generation")
-
-            parts = re.sub(r'#+\s*|\*+\s*', '', response_text).strip().split("|")
-            if len(parts) < 2: return await self._generate_static_challenge(game_mode)
-            
-            return {
-                "challenge_type": processor_input["challenge_type"], "source_text": parts[0].strip(), 
-                "target_text": parts[1].strip(), "context": context
-            }
+                parts = re.sub(r'#+\s*|\*+\s*', '', response_text).strip().split("|")
+                if len(parts) < 2:
+                    challenge = await self._generate_static_challenge(game_mode)
+                else:
+                    challenge = {
+                        "challenge_type": processor_input["challenge_type"], "source_text": parts[0].strip(), 
+                        "target_text": parts[1].strip(), "context": context
+                    }
         except Exception as e:
             logger.error(f"Error generating challenge: {e}", exc_info=True)
-            return await self._generate_static_challenge(game_mode)
+            challenge = await self._generate_static_challenge(game_mode)
+
+        # --- Return both challenge and state ---
+        return {
+            "challenge": challenge,
+            "state": json.loads(state.model_dump_json()) # Ensure state is JSON serializable
+        }

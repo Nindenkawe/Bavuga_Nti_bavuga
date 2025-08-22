@@ -162,6 +162,6 @@ if __name__ == "__main__":
     try:
         import uvicorn
         uvicorn.run(app, host="0.0.0.0", port=2500)
-    except (ValueError, KeyError) as e:
-        logger.critical(e, exc_info=True)
+    except (ValueError, KeyError) as e: # Catches critical startup errors like missing .env variables
+        logger.critical(f"Application failed to start: {e}", exc_info=True)
         exit(1)

@@ -38,7 +38,11 @@ Do not add any other text or formatting.'''
     
     def _clean_text(self, text: str) -> str:
         """Removes punctuation, and extra whitespace and converts to lowercase."""
-        return re.sub(r"[^\\w\\s]", "", text).lower().strip()
+        # Remove punctuation using a more robust regex
+        text = re.sub(r"[^\\w\\s]", "", text)
+        # Normalize whitespace
+        text = re.sub(r"\\s+", " ", text)
+        return text.lower().strip()
 
     async def call(
         self,
@@ -55,12 +59,25 @@ Do not add any other text or formatting.'''
             target_text = input_data["target_text"]
             challenge_type = input_data["challenge_type"]
 
-            if challenge_type == "gusakuza":
+            # --- Simple Evaluation for definitive challenges ---
+            if challenge_type in ["gusakuza", "story_translation", "kin_to_eng_proverb", "eng_to_kin_phrase"]:
                 is_correct = self._clean_text(user_answer) == self._clean_text(target_text)
-                feedback = "Correct!" if is_correct else f"Not quite. The correct answer is: {target_text}"
+                if is_correct:
+                    feedback = "Correct!"
+                else:
+                    feedback = f"Not quite. The correct answer is: {target_text}"
                 yield ProcessorPart(json.dumps({"is_correct": is_correct, "feedback": feedback}))
                 return
 
+            # --- Always-correct Evaluation for creative challenges ---
+            if challenge_type == "image_description":
+                is_correct = True
+                feedback = "Thank you for your creative description!"
+                yield ProcessorPart(json.dumps({"is_correct": is_correct, "feedback": feedback}))
+                return
+
+            # --- LLM-based Evaluation for nuanced challenges (if any) ---
+            # (Currently, all challenges are handled above, but this structure allows for future expansion)
             prompt_input = AnswerEvaluationInput(
                 user_answer=user_answer,
                 target_text=target_text,
@@ -68,7 +85,7 @@ Do not add any other text or formatting.'''
             )
             
             formatted_prompt = self.prompt.format(**prompt_input)
-            logger.info(f"--- GenAI-Processor REQUEST ---\nPROMPT: {formatted_prompt}\n")
+            logger.info(f"--- GenAI-Processor REQUEST (LLM Eval) ---\\nPROMPT: {formatted_prompt}\\n")
 
             for model_name in self.model_names:
                 try:
@@ -79,7 +96,7 @@ Do not add any other text or formatting.'''
                         if part.text:
                             response += part.text
                     
-                    logger.info(f"--- GenAI-Processor RESPONSE (model: {model_name}) ---\nRESPONSE: {response}\n")
+                    logger.info(f"--- GenAI-Processor RESPONSE (model: {model_name}) ---\\nRESPONSE: {response}\\n")
                     
                     cleaned_response = response.strip().replace("```json", "").replace("```", "")
                     response_data = json.loads(cleaned_response)
@@ -90,7 +107,7 @@ Do not add any other text or formatting.'''
                     continue
             
             logger.error("All models failed. Falling back to simple string matching for correctness.")
-            is_correct = user_answer.lower().strip() == target_text.lower().strip()
+            is_correct = self._clean_text(user_answer) == self._clean_text(target_text)
             feedback = "Correct!" if is_correct else f"Incorrect. The correct answer is: {target_text}"
             yield ProcessorPart(json.dumps({"is_correct": is_correct, "feedback": feedback, "fallback": True}))
 

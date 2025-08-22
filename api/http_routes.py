@@ -81,8 +81,18 @@ async def get_challenge_endpoint(request: Request, difficulty: int = None, game_
             response_json += part.text
     
     try:
-        challenge_data = json.loads(response_json)
-    except json.JSONDecodeError:
+        # The response is now a dictionary containing both the challenge and the updated state
+        result_data = json.loads(response_json)
+        challenge_data = result_data.get("challenge", {})
+        updated_state_data = result_data.get("state")
+
+        # Update the session with the new state returned by the processor
+        if updated_state_data:
+            current_state = db_logic.GameState(**updated_state_data)
+            await update_game_state(request.session, current_state)
+
+    except (json.JSONDecodeError, KeyError):
+        # Fallback for image generation failure
         if game_mode == "image":
             logger.warning("Image generation failed, using fallback image.")
             fallback_image = random.choice(os.listdir("static/sampleimg"))
@@ -98,14 +108,18 @@ async def get_challenge_endpoint(request: Request, difficulty: int = None, game_
     if "error_message" in challenge_data:
         raise HTTPException(status_code=503, detail=challenge_data["error_message"])
 
-    if challenge_data["challenge_type"] == "gusakuza_init":
+    # Handle the 'sakwe' game mode initialization
+    if challenge_data.get("challenge_type") == "gusakuza_init":
         current_state.pending_riddle = challenge_data["target_text"]
         await update_game_state(request.session, current_state)
         return ChallengeResponse(challenge_id="gusakuza_init", **challenge_data)
 
+    # Save the challenge to the database
     challenge = Challenge(**challenge_data, difficulty=difficulty)
     challenge_id = await save_challenge(challenge)
-    await update_game_state(request.session, current_state)
+    
+    # The game state is already updated, so we don't need to call update_game_state again
+    # unless there are other changes to be made here.
 
     return ChallengeResponse(
         challenge_id=str(challenge_id),
@@ -154,11 +168,16 @@ async def get_hint_endpoint(request: Request, challenge_id: str):
     if current_state.story:
         try:
             story_data = json.loads(current_state.story)
+            # Use the current chapter, but don't advance it
             story_context = story_data["chapters"][current_state.story_chapter]
         except (json.JSONDecodeError, IndexError):
             pass
 
-    hint_data = await context.game_processor.challenge_generator.generate_hint(challenge.source_text, story_context)
+    # The riddle is the source_text, and the answer is the target_text
+    riddle = challenge.source_text
+    answer = challenge.target_text
+
+    hint_data = await context.game_processor.challenge_generator.generate_hint(riddle, answer, story_context)
     return hint_data
 
 

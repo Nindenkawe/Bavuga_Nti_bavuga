@@ -38,3 +38,5 @@ dev_db.json
 
 # MLOps directory
 MLOps/
+*.swp
+logs/
