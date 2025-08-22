@@ -37,6 +37,8 @@ venv.old/
 dev_db.json
 
 # MLOps directory
-MLOps/
 *.swp
 logs/
+MLOps/
+# Google Cloud Credentials
+google-credentials.json

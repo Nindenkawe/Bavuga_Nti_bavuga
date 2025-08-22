@@ -4,6 +4,7 @@
 set -e
 
 # --- Configuration ---
+# The Project ID for your Google Cloud project is read from the first argument.
 # The Project ID for your Google Cloud project.
 PROJECT_ID="bavuga-ntibavuga-468809"
 # The name for your new service account.
@@ -24,7 +25,6 @@ fi
 SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 echo "--- Google Cloud Setup for Bavuga App ---"
-echo
 
 # --- Prerequisite Check ---
 echo "STEP 0: Checking for prerequisites..."
@@ -33,28 +33,26 @@ if ! command -v gcloud &> /dev/null; then
     exit 1
 fi
 
-if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
+# A more robust check for gcloud login status.
+if [ -z "$(gcloud auth list --filter=status:ACTIVE --format='value(account)')" ]; then
     echo "You are not logged into gcloud. Please run 'gcloud auth login' and 'gcloud auth application-default login' first."
     exit 1
 else
     echo "gcloud authentication found."
 fi
-echo
 
 # --- Step 1: Set the active project ---
-echo "STEP 1: Setting active project to '$PROJECT_ID'ப்பான"
+echo "STEP 1: Setting active project to '$PROJECT_ID'"
 gcloud config set project "$PROJECT_ID"
 echo "Project set successfully."
-echo
 
 # --- Step 2: Enable required APIs ---
-echo "STEP 2: Enabling required APIs (Speech-to-Text and Text-to-Speech)..."
-gcloud services enable speech.googleapis.com texttospeech.googleapis.com
+echo "STEP 2: Enabling required APIs (Vertex AI, Speech-to-Text, and Text-to-Speech)..."
+gcloud services enable aiplatform.googleapis.com speech.googleapis.com texttospeech.googleapis.com
 echo "APIs enabled successfully."
-echo
 
 # --- Step 3: Create the service account ---
-echo "STEP 3: Creating service account '$SERVICE_ACCOUNT_NAME'ப்பான"
+echo "STEP 3: Creating service account '$SERVICE_ACCOUNT_NAME'"
 # Check if the service account already exists to avoid errors.
 if gcloud iam service-accounts describe "${SERVICE_ACCOUNT_EMAIL}" --project="$PROJECT_ID" &>/dev/null; then
   echo "Service account '$SERVICE_ACCOUNT_NAME' already exists. Skipping creation."
@@ -64,34 +62,32 @@ else
     --project="$PROJECT_ID"
   echo "Service account created successfully."
 fi
-echo
 
 # --- Step 4: Grant IAM roles to the service account ---
 echo "STEP 4: Granting necessary IAM roles..."
-# Role for Text-to-Speech
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
-  --role="roles/texttospeech.user" \
+  --role="roles/aiplatform.user" \
   --quiet
-echo "Granted 'Cloud Text-to-Speech User' role."
+echo "Granted 'Vertex AI User' role."
 
-# Role for Speech-to-Text
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
-  --role="roles/speech.user" \
+  --role="roles/speech.client" \
   --quiet
-echo "Granted 'Cloud Speech-to-Text User' role."
-echo
+echo "Granted 'Cloud Speech Client' role."
 
 # --- Step 5: Create and download the service account key ---
 echo "STEP 5: Creating and downloading service account key..."
-gcloud iam service-accounts keys create "$KEY_FILE" \
-  --iam-account="${SERVICE_ACCOUNT_EMAIL}" \
-  --project="$PROJECT_ID"
-echo "Key file '$KEY_FILE' created successfully."
-echo
+if [ -f "$KEY_FILE" ]; then
+    echo "Key file '$KEY_FILE' already exists. Skipping key creation."
+else
+    gcloud iam service-accounts keys create "$KEY_FILE" \
+      --iam-account="${SERVICE_ACCOUNT_EMAIL}" \
+      --project="$PROJECT_ID"
+    echo "Key file '$KEY_FILE' created successfully."
+fi
 
-# --- Completion ---
+echo
 echo "--- Setup Complete! ---"
-echo "The '$KEY_FILE' has been created in your project directory."
-echo "You can now run 'docker-compose up --build -d' to start the application."
+echo "The '$KEY_FILE' has been created and/or verified in your project directory."
