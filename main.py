@@ -1,5 +1,6 @@
 import os
 import logging
+import uvicorn
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -25,12 +26,11 @@ load_dotenv()
 
 # Determine run mode from environment variables
 IS_DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
-IS_DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
 init_app_mode(IS_DEV_MODE)
 
 # Configure logging with a specific format
-log_level = logging.DEBUG if IS_DEBUG_MODE else logging.INFO
+log_level = logging.DEBUG if os.getenv("DEBUG_MODE", "false").lower() == "true" else logging.INFO
 logging.basicConfig(
     level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -39,7 +39,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Suppress verbose logging from Uvicorn and other libraries in non-debug mode
-if not IS_DEBUG_MODE:
+if not (os.getenv("DEBUG_MODE", "false").lower() == "true"):
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("websockets").setLevel(logging.WARNING)
@@ -67,7 +67,7 @@ from api.models import ChallengeResponse, SubmissionResponse, TranscribeResponse
 async def lifespan(app: FastAPI):
     logger.info("="*20 + " Application Lifespan Start " + "="*20)
     logger.info(f"Running in {'DEV' if db_logic.DEV_MODE else 'PROD'} mode.")
-    logger.debug(f"Debug mode is {'ENABLED' if IS_DEBUG_MODE else 'DISABLED'}.")
+    logger.debug(f"Debug mode is {'ENABLED' if os.getenv('DEBUG_MODE', 'false').lower() == 'true' else 'DISABLED'}.")
 
     # --- Database Connection ---
     if not db_logic.DEV_MODE:
@@ -154,3 +154,12 @@ def create_app():
     return app
 
 app = create_app()
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8080,
+        reload=IS_DEV_MODE,
+        log_level=logging.getLevelName(logger.getEffectiveLevel()).lower(),
+    )
